@@ -17,7 +17,7 @@ SEASON = 2026
 PRIOR_SEASON = 2025
 PRIOR_WEEKS = list(range(1, 19))
 CUR_WEEKS = list(range(1, 19))
-MAX_DONE_WEEK = 4          # weeks fully completed (week 5 in progress)
+MAX_DONE_WEEK = 5          # last fully completed week (bump as season progresses)
 
 # 2/3 Elo + 1/3 score-sim: Elo is the best-validated public signal,
 # the sim adds matchup-specific scoring info.
@@ -85,8 +85,13 @@ def predict(away, home, data, max_week=MAX_DONE_WEEK, sims=20000,
 
     off_b, deff_b, lg, gp = _blended_scoring(cur_done, data.prior)
     lam_a_srs, lam_h_srs = expected_points(away, home, off_b, deff_b, lg, gp)
-    off_e, def_e, lg_e, ppg = team_epa(SEASON, max_week)
-    off_e25, def_e25, _, _ = team_epa(PRIOR_SEASON)
+    if max_week >= 1:
+        off_e, def_e, lg_e, ppg = team_epa(SEASON, max_week)
+        off_e25, def_e25, _, _ = team_epa(PRIOR_SEASON)
+    else:
+        # week 1: no current-season plays yet -> regressed prior-season EPA
+        off_e, def_e, lg_e, ppg = team_epa(PRIOR_SEASON)
+        off_e25, def_e25 = {}, {}
     lam_a_epa, lam_h_epa = epa_expected_points(
         away, home, off_e, def_e, lg_e, ppg, lg, off_e25, def_e25, gp)
     lam_a = min(45.0, max(10.0, 0.5 * (lam_a_srs + lam_a_epa) - HOME_PTS))

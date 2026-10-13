@@ -17,12 +17,21 @@ BASE = os.path.dirname(os.path.abspath(__file__))
 
 
 def main():
+    # Scores/results change after every game: never trust cached scoreboards
+    # for the current season (PFR player caches are fine to reuse intraday).
+    import glob
+    for f in glob.glob(os.path.join(BASE, "data", "cache", "espn_sb_2026_*.json")):
+        os.remove(f)
     data = SeasonData()
+    _done = [w for w in range(1, 19)
+             if [g for g in data.cur if g["week"] == w]
+             and all(g["done"] for g in data.cur if g["week"] == w)]
+    MAXDW = max(_done) if _done else 0  # last fully completed week
 
     # ---- team params for the JS sim lab (as of latest completed week) ----
-    from model import MAX_DONE_WEEK, _run_elo
+    from model import _run_elo
     from ratings import regress_offseason, win_prob, ELO_INIT, ELO_K, _mov_mult
-    cur_done = data.done_through(MAX_DONE_WEEK)
+    cur_done = data.done_through(MAXDW)
     off, deff, lg = adjusted_scoring(cur_done)
     off25, deff25, _ = adjusted_scoring(data.prior)
     off25 = {t: v * 0.6 for t, v in off25.items()}
@@ -41,7 +50,7 @@ def main():
                 (10.0 / (gp.get(t, 0) + 10.0)) * off25.get(t, 0.0) for t in teams}
     deff_b = {t: (gp.get(t, 0) / (gp.get(t, 0) + 10.0)) * deff.get(t, 0.0) +
                  (10.0 / (gp.get(t, 0) + 10.0)) * deff25.get(t, 0.0) for t in teams}
-    off_e, def_e, lg_e, ppg = team_epa(SEASON, MAX_DONE_WEEK)
+    off_e, def_e, lg_e, ppg = team_epa(SEASON, MAXDW)
     off_e25, def_e25, _, _ = team_epa(2025)
 
     def eblend(cur, prior, t):
@@ -139,7 +148,7 @@ def main():
         json.dump(teams_out, f)
     with open(os.path.join(datadir, "meta.json"), "w") as f:
         json.dump({"lg_pts": lg, "lg_epa": lg_e, "ppg": ppg, "hfa_pts": 1.0,
-                   "as_of_week": MAX_DONE_WEEK,
+                   "as_of_week": MAXDW,
                    "backtest": {"brier": 0.2235, "accuracy": 0.661,
                                 "games": 62}}, f)
     with open(os.path.join(datadir, "weeks.json"), "w") as f:
