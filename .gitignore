@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+data/cache/
+data/pbp_2025.csv
+data/pbp_2026.csv
+.env

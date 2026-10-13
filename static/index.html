@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Model Sim — NFL Monte Carlo Simulator</title>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="logo">◈</div>
+    <div>
+      <h1>MODEL SIM</h1>
+      <p class="sub">NFL Monte Carlo simulator · 20,000 sims per game</p>
+    </div>
+  </div>
+  <div class="backtest-badge" title="Walk-forward backtest, 2026 weeks 2–5">
+    <span class="dot"></span> Brier 0.224 · 66% SU <span class="dim">(62 games)</span>
+  </div>
+</header>
+
+<nav id="weeks"></nav>
+
+<main>
+  <section id="slate"><div class="grid" id="cards"></div></section>
+
+  <section class="lab">
+    <h2>SIM LAB <span class="dim">— run any matchup</span></h2>
+    <div class="lab-row">
+      <select id="lab-away"></select>
+      <span class="at">@</span>
+      <select id="lab-home"></select>
+      <button id="lab-run">RUN SIM</button>
+    </div>
+    <div id="lab-out"></div>
+  </section>
+</main>
+
+<div id="modal" class="modal hidden">
+  <div class="modal-card">
+    <button class="close" id="modal-close">✕</button>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<footer>
+  <p>Elo (538-style) + opponent-adjusted scoring + nflverse EPA/play → Poisson Monte Carlo.
+  Win prob = ⅔ Elo + ⅓ sim. Probabilities are estimates, not guarantees — bet responsibly.</p>
+</footer>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
