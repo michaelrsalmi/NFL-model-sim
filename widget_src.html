@@ -1,0 +1,221 @@
+<style>
+.ms { font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif; color: var(--hatch-widget-text); box-sizing: border-box; }
+.ms * { box-sizing: border-box; }
+.ms .hd { display:flex; justify-content:space-between; align-items:center; padding:14px 4px; border-bottom:1px solid var(--hatch-widget-border); margin-bottom:12px; flex-wrap:wrap; gap:8px;}
+.ms .brand { display:flex; gap:10px; align-items:center; }
+.ms .logo { width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#00a9ff,#0085ca);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px; box-shadow:0 0 16px rgba(0,169,255,.35);}
+.ms h1 { font-size:17px; letter-spacing:2px; margin:0; }
+.ms .sub { font-size:11px; color: var(--hatch-widget-muted); margin-top:2px;}
+.ms .badge { font-size:11px; color:var(--hatch-widget-muted); border:1px solid var(--hatch-widget-border); padding:6px 12px; border-radius:16px; background:var(--hatch-widget-surface);}
+.ms .badge .d { display:inline-block;width:7px;height:7px;border-radius:50%;background:#22c55e;margin-right:6px;}
+.ms .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px; }
+.ms .card { background:var(--hatch-widget-surface); border:1px solid var(--hatch-widget-border); border-radius:14px; padding:14px; cursor:pointer; transition:transform .12s, border-color .12s;}
+.ms .card:hover { transform:translateY(-2px); border-color:var(--hatch-widget-accent);}
+.ms .dt { font-size:10px; color:var(--hatch-widget-muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;}
+.ms .mu { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;}
+.ms .tm { display:flex; align-items:center; gap:7px; font-weight:700; font-size:15px;}
+.ms .tdot { width:10px;height:10px;border-radius:50%; }
+.ms .pj { font-size:13px; color:var(--hatch-widget-muted); font-variant-numeric:tabular-nums;}
+.ms .pb { display:flex; height:22px; border-radius:7px; overflow:hidden; margin:10px 0 5px; background:var(--hatch-widget-surface-muted);}
+.ms .pb .sg { display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff; transition:width .8s;}
+.ms .pl { display:flex; justify-content:space-between; font-size:11px; color:var(--hatch-widget-muted); margin-bottom:10px;}
+.ms .chips { display:flex; gap:6px; flex-wrap:wrap;}
+.ms .chip { font-size:11px; background:var(--hatch-widget-surface-muted); border:1px solid var(--hatch-widget-border); padding:4px 9px; border-radius:7px; color:var(--hatch-widget-muted);}
+.ms .chip b { color:var(--hatch-widget-text);}
+.ms .lab { margin-top:22px; border-top:1px solid var(--hatch-widget-border); padding-top:16px;}
+.ms .lab h2 { font-size:14px; letter-spacing:2px; margin:0 0 12px;}
+.ms .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+.ms select { background:var(--hatch-widget-surface); color:var(--hatch-widget-text); border:1px solid var(--hatch-widget-border); padding:10px 12px; border-radius:9px; font-size:14px;}
+.ms .run { background:linear-gradient(135deg,#00a9ff,#0085ca); border:none; color:#fff; font-weight:800; letter-spacing:1px; padding:10px 20px; border-radius:9px; cursor:pointer;}
+.ms .run:disabled { opacity:.5; }
+.ms .at { color:var(--hatch-widget-muted); font-weight:700;}
+.ms .modal { position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; padding:16px; z-index:50;}
+.ms .modal.hidden { display:none; }
+.ms .mc { background:var(--hatch-widget-surface); border:1px solid var(--hatch-widget-border); border-radius:16px; padding:22px; max-width:600px; width:100%; max-height:86vh; overflow-y:auto; position:relative;}
+.ms .x { position:absolute; top:10px; right:14px; background:none;border:none;color:var(--hatch-widget-muted);font-size:16px;cursor:pointer;}
+.ms .sc { font-size:22px; font-weight:800; text-align:center; margin:8px 0; font-variant-numeric:tabular-nums;}
+.ms .bp { display:flex; height:34px; border-radius:9px; overflow:hidden; margin:12px 0 6px; background:var(--hatch-widget-surface-muted);}
+.ms .bp .sg { display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff;}
+.ms .sg2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:8px; margin:12px 0;}
+.ms .st { background:var(--hatch-widget-surface-muted); border:1px solid var(--hatch-widget-border); border-radius:9px; padding:8px; text-align:center;}
+.ms .st .k { font-size:10px; color:var(--hatch-widget-muted); text-transform:uppercase; letter-spacing:1px;}
+.ms .st .v { font-size:16px; font-weight:800; margin-top:3px;}
+.ms .tabs { display:flex; gap:6px; margin:12px 0 8px;}
+.ms .tabs button { background:var(--hatch-widget-surface-muted); color:var(--hatch-widget-muted); border:1px solid var(--hatch-widget-border); padding:7px 14px; border-radius:7px; cursor:pointer; font-size:12px;}
+.ms .tabs button.on { background:#0085ca; color:#fff; border-color:transparent; font-weight:700;}
+.ms table { width:100%; border-collapse:collapse; font-size:13px;}
+.ms th { text-align:left; color:var(--hatch-widget-muted); font-size:10px; text-transform:uppercase; letter-spacing:1px; padding:7px; border-bottom:1px solid var(--hatch-widget-border);}
+.ms td { padding:7px; border-bottom:1px solid var(--hatch-widget-border); font-variant-numeric:tabular-nums;}
+.ms .od { font-weight:700; color:var(--hatch-widget-accent);}
+.ms .ft { text-align:center; color:var(--hatch-widget-muted); font-size:10px; padding:14px 4px 2px; line-height:1.6;}
+.ms .spin { text-align:center; color:var(--hatch-widget-muted); padding:24px;}
+</style>
+<div class="ms" id="ms">
+  <div class="hd">
+    <div class="brand"><div class="logo">◈</div>
+      <div><h1>MODEL SIM</h1><div class="sub" id="asof"></div></div>
+    </div>
+    <div class="badge"><span class="d"></span>Brier 0.224 · 66% SU <span style="opacity:.7">(62 games)</span></div>
+  </div>
+  <div class="grid" id="cards"></div>
+  <div class="lab">
+    <h2>SIM LAB <span style="color:var(--hatch-widget-muted);font-weight:400">— run any matchup live</span></h2>
+    <div class="row">
+      <select id="la"></select><span class="at">@</span><select id="lh"></select>
+      <button class="run" id="go">RUN SIM</button>
+    </div>
+    <div id="lout" style="margin-top:14px"></div>
+  </div>
+  <div class="ft">Elo (538-style) + opponent-adjusted scoring + nflverse EPA/play → Poisson Monte Carlo (20k sims). Win prob = ⅔ Elo + ⅓ sim. Estimates, not guarantees.</div>
+</div>
+<div class="ms"><div class="modal hidden" id="modal"><div class="mc">
+  <button class="x" id="mx">✕</button><div id="mb"></div>
+</div></div></div>
+<script>
+const BUNDLE = /*__BUNDLE__*/null;
+const C = {ARI:"#97233F",ATL:"#A71930",BAL:"#241773",BUF:"#00338D",CAR:"#0085CA",CHI:"#0B162A",CIN:"#FB4F14",CLE:"#E31837",DAL:"#003594",DEN:"#FB4F14",DET:"#0076B6",GB:"#203731",HOU:"#03202F",IND:"#002C5F",JAX:"#006778",KC:"#E31837",LV:"#888888",LAC:"#0080C6",LAR:"#003594",MIA:"#008E97",MIN:"#4F2683",NE:"#002244",NO:"#D3BC8D",NYG:"#0B2265",NYJ:"#125740",PHI:"#004C54",PIT:"#FFB612",SEA:"#002244",SF:"#AA0000",TB:"#D50A0A",TEN:"#0C2340",WAS:"#5A1414"};
+const M = BUNDLE.meta, T = BUNDLE.teams;
+const $ = id => document.getElementById(id);
+function hx(h){h=h.replace('#','');return[parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
+function shade(h,amt){const c=hx(h).map(v=>Math.max(0,Math.min(255,Math.round(v+amt))));return'#'+c.map(v=>v.toString(16).padStart(2,'0')).join('');}
+function tc(t,o){let c=C[t];if(o&&o!==t){const a=hx(c),b=hx(C[o]);
+ const d=Math.sqrt(a.reduce((s,v,i)=>s+(v-b[i])**2,0));if(d<110)c=shade(c,75);}return c;}
+const dot = t => `<span class="tdot" style="background:${C[t]}"></span>`;
+const dot2 = (t,o) => `<span class="tdot" style="background:${tc(t,o)}"></span>`;
+const pc = p => (p*100).toFixed(1)+"%";
+const od = o => o==null?"--":(o<0?""+o:"+"+o);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function mulberry(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function pois(lam,rng){const L=Math.exp(-lam);let k=0,p=1;do{k++;p*=rng();}while(p>L);return k-1;}
+// Mirror of the Python model
+function lambdas(a,h){
+  const A=T[a],H=T[h];
+  const laS=M.lg_pts+A.srs_off-H.srs_def, lhS=M.lg_pts+H.srs_off-A.srs_def;
+  const laE=M.lg_pts+(A.epa_off-M.lg_epa)*M.ppg+(M.lg_epa-H.epa_def)*M.ppg;
+  const lhE=M.lg_pts+(H.epa_off-M.lg_epa)*M.ppg+(M.lg_epa-A.epa_def)*M.ppg;
+  return [clamp(.5*(laS+laE)-M.hfa_pts,10,45), clamp(.5*(lhS+lhE)+M.hfa_pts,10,45)];
+}
+function eloP(a,h){const d=T[h].elo-T[a].elo+42.2;return 1/(1+Math.pow(10,-d/400));}
+function simGame(a,h,sims,seed){
+  const [la,lh]=lambdas(a,h), rng=mulberry(seed||7);
+  let hw=0,aw=0; const SA=new Float64Array(sims),SH=new Float64Array(sims);
+  for(let i=0;i<sims;i++){const x=pois(la,rng),y=pois(lh,rng);SA[i]=x;SH[i]=y;if(y>x)hw++;else if(x>y)aw++;}
+  const ties=sims-hw-aw, ps=(hw+.5*ties)/sims, pe=eloP(a,h);
+  return {la,lh,pHome:2/3*pe+1/3*ps,pSim:ps,pElo:pe,
+    pa:SA.reduce((s,v)=>s+v,0)/sims, ph:SH.reduce((s,v)=>s+v,0)/sims};
+}
+function tdBoard(a,h,la,lh){
+  const mk=(pls,exp)=>{const n=pls.length||1,tt=pls.reduce((s,p)=>s+p.td,0),th=pls.reduce((s,p)=>s+p.touches,0);
+    return pls.map(p=>{const sh=.5*(p.td+.5)/(tt+.5*n)+.5*(p.touches+5)/(th+5*n);
+      const l=exp*sh;return{name:p.name,team:p.team||"",td:p.td,lam:l,pa:1-Math.exp(-l)};});};
+  const A=mk(T[a].players.map(p=>({...p,team:a})),la/7), H=mk(T[h].players.map(p=>({...p,team:h})),lh/7);
+  const all=A.concat(H), tot=all.reduce((s,p)=>s+p.lam,0), anyP=1-Math.exp(-tot);
+  all.forEach(p=>{p.pf=tot?p.lam/tot*anyP:0;
+    p.oA=p.pa<=0?null:(p.pa>.5?Math.round(-100*p.pa/(1-p.pa)):Math.round(100*(1-p.pa)/p.pa));
+    p.oF=p.pf<=0?null:(p.pf>.5?Math.round(-100*p.pf/(1-p.pf)):Math.round(100*(1-p.pf)/p.pf));});
+  return {any:[...all].sort((x,y)=>y.pa-x.pa).slice(0,12),
+          first:[...all].sort((x,y)=>y.pf-x.pf).slice(0,8)};
+}
+function pbar(a,pa,h,ph,big){
+  const ca=tc(a,h);
+  return `<div class="${big?"bp":"pb"}">
+    <div class="sg" style="width:${(pa*100).toFixed(1)}%;background:${ca}">${pc(pa)}</div>
+    <div class="sg" style="width:${(ph*100).toFixed(1)}%;background:${C[h]}">${pc(ph)}</div></div>
+  ${big?"":`<div class="pl"><span>${dot2(a,h)} ${a}</span><span>${h} ${dot(h)}</span></div>`}`;
+}
+function tbl(rows,first){
+  return `<table><tr><th>Player</th><th>Team</th><th>Prob</th><th>Fair odds</th></tr>`+
+    rows.map(p=>`<tr><td>${p.name}</td><td>${p.team}</td><td>${(p[first?"pf":"pa"]*100).toFixed(first?2:1)}%</td><td class="od">${od(p[first?"oF":"oA"])}</td></tr>`).join("")+`</table>`;
+}
+function detail(a,h,r,td){
+  return `<h2 style="letter-spacing:2px;margin:0 0 4px">${a} @ ${h}</h2>
+  <div class="sc">${a} ${r.pa.toFixed(1)} — ${r.ph.toFixed(1)} ${h}</div>${pbar(a,1-r.pHome,h,r.pHome,true)}
+  <div class="sg2">
+    <div class="st"><div class="k">Fair spread</div><div class="v">${(r.ph-r.pa)>=0?"+":""}${(r.ph-r.pa).toFixed(1)}</div></div>
+    <div class="st"><div class="k">Fair total</div><div class="v">${(r.ph+r.pa).toFixed(1)}</div></div>
+    <div class="st"><div class="k">${h} win</div><div class="v">${pc(r.pHome)}</div></div>
+    <div class="st"><div class="k">${a} win</div><div class="v">${pc(1-r.pHome)}</div></div>
+  </div>
+  <div class="tabs"><button class="on" data-t="a">Anytime TD</button><button data-t="f">First TD</button></div>
+  <div class="tb">${tbl(td.any,false)}</div>`;
+}
+function wireTabs(root,td){
+  root.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
+    root.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("on"));b.classList.add("on");
+    root.querySelector(".tb").innerHTML=tbl(b.dataset.t==="a"?td.any:td.first,b.dataset.t==="f");});
+}
+// Slate (precomputed, all weeks when available)
+const WEEKS = BUNDLE.weeks || {[BUNDLE.meta.week]: BUNDLE.slate};
+const WK = Object.keys(WEEKS).map(Number).sort((a,b)=>a-b);
+let CURW = WK.filter(w=>WEEKS[w].some(g=>!g.done)).sort((a,b)=>a-b)[0] || WK[WK.length-1];
+function gameCard(g){
+  const el=document.createElement("div");el.className="card";
+  let extra="";
+  if(g.done&&g.winner){
+    const hit=(g.winner==="home"&&g.p_home>.5)||(g.winner==="away"&&g.p_away>.5);
+    extra=`<div style="font-size:12px;font-weight:700;margin-top:8px;color:${hit?"#22c55e":"#ef4444"}">Final ${g.final} — model ${hit?"✓":"✗"}</div>`;
+  }
+  const dt=g.date?new Date(g.date).toLocaleString("en-US",{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"";
+  el.innerHTML=`<div class="dt">${dt}${g.done?" · Final":""}</div>
+    <div class="mu"><span class="tm">${dot2(g.away,g.home)} ${g.away}</span><span class="pj">${g.proj_away.toFixed(1)}</span></div>
+    <div class="mu"><span class="tm">${dot(g.home)} ${g.home}</span><span class="pj">${g.proj_home.toFixed(1)}</span></div>
+    ${pbar(g.away,g.p_away,g.home,g.p_home)}
+    <div class="chips"><span class="chip">spread <b>${g.fair_spread>0?"+":""}${g.fair_spread.toFixed(1)}</b></span>
+    <span class="chip">total <b>${g.fair_total.toFixed(1)}</b></span></div>${extra}`;
+  el.onclick=()=>{
+    const td={any:g.anytime.map(p=>({name:p.name,team:p.team,pa:p.prob,oA:p.odds})),
+              first:g.first_td.map(p=>({name:p.name,team:p.team,pf:p.prob,oF:p.odds}))};
+    let body=detail(g.away,g.home,
+      {pa:g.proj_away,ph:g.proj_home,pHome:g.p_home},td);
+    if(!td.any.length){
+      body=body.replace(/<div class="tabs">.*?<\/div>\s*<div class="tb">.*?<\/div>/s,
+        `<p style="color:var(--hatch-widget-muted);font-size:12px">TD boards available for upcoming games only.</p>`);
+    }
+    $("mb").innerHTML=body;
+    $("mb").querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
+      $("mb").querySelectorAll(".tabs button").forEach(x=>x.classList.remove("on"));b.classList.add("on");
+      $("mb").querySelector(".tb").innerHTML=tbl(b.dataset.t==="a"?td.any:td.first,b.dataset.t==="f");});
+    $("modal").classList.remove("hidden");
+  };
+  return el;
+}
+function loadWeek(w){
+  CURW=w;
+  document.querySelectorAll(".wkbtn").forEach(b=>b.classList.toggle("on",+b.dataset.w===w));
+  const el=$("cards");el.innerHTML="";
+  WEEKS[w].forEach(g=>el.appendChild(gameCard(g)));
+  const done=WEEKS[w].filter(g=>g.done&&g.winner);
+  const hit=done.filter(g=>(g.winner==="home")==(g.p_home>.5)).length;
+  $("asof").textContent=`Week ${w} · ${done.length?`model ${hit}/${done.length} so far · `:""}data through week ${M.as_of_week}`;
+}
+(function(){
+  // week nav
+  const nav=document.createElement("div");
+  nav.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px";
+  WK.forEach(w=>{const b=document.createElement("button");b.className="wkbtn";b.dataset.w=w;
+    b.textContent="Wk "+w;
+    b.style.cssText="background:var(--hatch-widget-surface);color:var(--hatch-widget-muted);border:1px solid var(--hatch-widget-border);padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px";
+    b.onclick=()=>loadWeek(w);nav.appendChild(b);});
+  $("cards").parentNode.insertBefore(nav,$("cards"));
+  const st=document.createElement("style");
+  st.textContent=".wkbtn.on{background:#0085ca!important;color:#fff!important;border-color:transparent!important;font-weight:700}";
+  document.head.appendChild(st);
+  const teams=Object.keys(T).sort();
+  teams.forEach(t=>{$("la").appendChild(new Option(t,t));$("lh").appendChild(new Option(t,t));});
+  $("la").value="BUF";$("lh").value="LAR";
+  $("mx").onclick=()=>$("modal").classList.add("hidden");
+  $("modal").onclick=e=>{if(e.target.id==="modal")$("modal").classList.add("hidden");};
+  $("go").onclick=()=>{
+    const a=$("la").value,h=$("lh").value;
+    if(a===h){$("lout").innerHTML=`<p style="color:var(--hatch-widget-muted)">Pick two different teams.</p>`;return;}
+    $("go").disabled=true;$("lout").innerHTML=`<div class="spin">Running 20,000 simulations…</div>`;
+    setTimeout(()=>{
+      const r=simGame(a,h,20000,Date.now()%100000);
+      const td=tdBoard(a,h,r.la,r.lh);
+      $("lout").innerHTML=detail(a,h,r,td);wireTabs($("lout"),td);
+      $("go").disabled=false;
+    },30);
+  };
+  loadWeek(CURW);
+})();
+</script>
