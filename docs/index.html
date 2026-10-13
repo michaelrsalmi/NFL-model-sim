@@ -3,15 +3,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Model Sim — NFL Monte Carlo Simulator</title>
 <style>
-:root{--bg:#0a0e14;--card:#111722;--card2:#161e2c;--line:#232d40;--txt:#e8edf5;--dim:#8b96ab;--ac:#00a9ff;--ac2:#0085ca;--grn:#22c55e;--red:#ef4444}
+:root{--bg:#07090d;--card:#0d1117;--card2:#12161e;--line:#1f2733;--txt:#eef2f7;--dim:#8f9aab;--ac:#2fb7ec;--ac2:#0085ca;--panther:#0085ca;--silver:#a5acaf;--grn:#22c55e;--red:#ef4444}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:radial-gradient(1200px 600px at 50% -10%,#10233a 0%,var(--bg) 60%);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;min-height:100vh}
+body{background:radial-gradient(1200px 600px at 50% -10%,#0a2a3f 0%,var(--bg) 60%);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;min-height:100vh}
 .wrap{max-width:1180px;margin:0 auto;padding:0 20px}
 header{display:flex;justify-content:space-between;align-items:center;padding:20px;flex-wrap:wrap;gap:10px}
 .brand{display:flex;gap:12px;align-items:center}
-.logo{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,var(--ac),var(--ac2));display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;box-shadow:0 0 20px rgba(0,169,255,.35)}
+.logo{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,#2fb7ec,#0085ca 55%,#003a54);display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;box-shadow:0 0 20px rgba(0,133,202,.45);border:1px solid rgba(165,172,175,.35)}
 h1{font-size:20px;letter-spacing:3px}
 .sub{color:var(--dim);font-size:12px;margin-top:2px}
+.sub .kp{color:var(--silver);font-weight:700;letter-spacing:1px}
 .badge{font-size:12px;color:var(--dim);border:1px solid var(--line);padding:8px 14px;border-radius:20px;background:var(--card)}
 .badge .d{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--grn);margin-right:6px}
 .wks{display:flex;gap:6px;flex-wrap:wrap;padding:0 20px 14px}
@@ -62,7 +63,7 @@ footer{text-align:center;color:var(--dim);font-size:11px;padding:24px;line-heigh
 </style></head>
 <body><div class="wrap">
 <header><div class="brand"><div class="logo">◈</div>
-<div><h1>MODEL SIM</h1><div class="sub" id="asof"></div></div></div>
+<div><h1>MODEL SIM</h1><div class="sub"><span class="kp">KEEP POUNDING</span> · <span id="asof"></span></div></div></div>
 <div class="badge"><span class="d"></span>Brier 0.224 · 66% SU <span style="opacity:.7">(62 games)</span></div></header>
 <div class="wks" id="wks"></div>
 <div class="grid" id="cards"></div>
@@ -76,7 +77,13 @@ footer{text-align:center;color:var(--dim);font-size:11px;padding:24px;line-heigh
 <script>
 const C={ARI:"#97233F",ATL:"#A71930",BAL:"#241773",BUF:"#00338D",CAR:"#0085CA",CHI:"#0B162A",CIN:"#FB4F14",CLE:"#E31837",DAL:"#003594",DEN:"#FB4F14",DET:"#0076B6",GB:"#203731",HOU:"#03202F",IND:"#002C5F",JAX:"#006778",KC:"#E31837",LV:"#888888",LAC:"#0080C6",LAR:"#003594",MIA:"#008E97",MIN:"#4F2683",NE:"#002244",NO:"#D3BC8D",NYG:"#0B2265",NYJ:"#125740",PHI:"#004C54",PIT:"#FFB612",SEA:"#002244",SF:"#AA0000",TB:"#D50A0A",TEN:"#0C2340",WAS:"#5A1414"};
 const $=id=>document.getElementById(id);
+function hx(h){h=h.replace('#','');return[parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
+function shade(h,amt){const c=hx(h).map(v=>Math.max(0,Math.min(255,Math.round(v+amt))));return'#'+c.map(v=>v.toString(16).padStart(2,'0')).join('');}
+// lighten the away side when both teams' colors are near-identical (e.g. BUF/LAR blues)
+function tc(t,o){let c=C[t];if(o&&o!==t){const a=hx(c),b=hx(C[o]);
+ const d=Math.sqrt(a.reduce((s,v,i)=>s+(v-b[i])**2,0));if(d<110)c=shade(c,75);}return c;}
 const dot=t=>`<span class="tdot" style="background:${C[t]}"></span>`;
+const dot2=(t,o)=>`<span class="tdot" style="background:${tc(t,o)}"></span>`;
 const pc=p=>(p*100).toFixed(1)+"%", od=o=>o==null?"--":(o<0?""+o:"+"+o);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 let META=null,TEAMS=null;const WKC={};
@@ -99,8 +106,8 @@ function tdBoard(a,h,la,lh){const mk=(pl,e)=>{const n=pl.length||1,tt=pl.reduce(
   p.oA=p.pa<=0?null:(p.pa>.5?Math.round(-100*p.pa/(1-p.pa)):Math.round(100*(1-p.pa)/p.pa));
   p.oF=p.pf<=0?null:(p.pf>.5?Math.round(-100*p.pf/(1-p.pf)):Math.round(100*(1-p.pf)/p.pf));});
  return{any:[...all].sort((x,y)=>y.pa-x.pa).slice(0,12),first:[...all].sort((x,y)=>y.pf-x.pf).slice(0,8)};}
-function pbar(a,pa,h,ph,big){return `<div class="${big?"bp":"pb"}">
- <div class="sg" style="width:${(pa*100).toFixed(1)}%;background:${C[a]}">${pc(pa)}</div>
+function pbar(a,pa,h,ph,big){const ca=tc(a,h);return `<div class="${big?"bp":"pb"}">
+ <div class="sg" style="width:${(pa*100).toFixed(1)}%;background:${ca}">${pc(pa)}</div>
  <div class="sg" style="width:${(ph*100).toFixed(1)}%;background:${C[h]}">${pc(ph)}</div></div>`;}
 function tbl(rs,f){return `<table><tr><th>Player</th><th>Team</th><th>Prob</th><th>Fair odds</th></tr>`+
  rs.map(p=>`<tr><td>${p.name}</td><td>${p.team}</td><td>${(p[f?"pf":"pa"]*100).toFixed(f?2:1)}%</td><td class="od">${od(p[f?"oF":"oA"])}</td></tr>`).join("")+`</table>`;}
@@ -125,7 +132,7 @@ async function loadWeek(w){
   let ex="";if(g.done&&g.winner){const hit=(g.winner==="home")==(g.p_home>.5);
    ex=`<div class="fin ${hit?"hit":"miss"}">Final ${g.final} — model ${hit?"✓":"✗"}</div>`;}
   d.innerHTML=`<div class="dt">${dt}${g.done?" · Final":""}</div>
-  <div class="mu"><span class="tm">${dot(g.away)} ${g.away}</span><span class="pj">${g.proj_away.toFixed(1)}</span></div>
+  <div class="mu"><span class="tm">${dot2(g.away,g.home)} ${g.away}</span><span class="pj">${g.proj_away.toFixed(1)}</span></div>
   <div class="mu"><span class="tm">${dot(g.home)} ${g.home}</span><span class="pj">${g.proj_home.toFixed(1)}</span></div>
   ${pbar(g.away,g.p_away,g.home,g.p_home)}
   <div class="pl"><span>${g.away} ${pc(g.p_away)}</span><span>${pc(g.p_home)} ${g.home}</span></div>
