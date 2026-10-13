@@ -73,7 +73,7 @@ footer{text-align:center;color:var(--dim);font-size:11px;padding:24px;line-heigh
 <div class="row"><select id="la"></select><span style="color:var(--dim);font-weight:700">@</span><select id="lh"></select>
 <button class="run" id="go">RUN SIM</button></div>
 <div id="lout" style="margin-top:14px"></div></div>
-<footer>Elo (538-style) + opponent-adjusted scoring + nflverse EPA/play → Poisson Monte Carlo (20k sims). Win prob = ⅔ Elo + ⅓ sim. Estimates, not guarantees.</footer>
+<footer>Elo (538-style) + opponent-adjusted scoring + nflverse EPA/play → Poisson Monte Carlo (20k sims). Win prob = ⅔ Elo + ⅓ sim.<br>“Fair” spread/total = the model's number · “book” = the DraftKings line. Estimates, not guarantees.</footer>
 </div>
 <div class="modal hidden" id="modal"><div class="mc"><button class="x" id="mx">✕</button><div id="mb"></div></div></div>
 <script>
@@ -147,7 +147,7 @@ async function loadWeek(w){
   <div class="mu"><span class="tm">${dot(g.home)} ${g.home}</span><span class="pj">${g.proj_home.toFixed(1)}</span></div>
   ${pbar(g.away,g.p_away,g.home,g.p_home)}
   <div class="pl"><span>${g.away} ${pc(g.p_away)}</span><span>${pc(g.p_home)} ${g.home}</span></div>
-  <div class="chips"><span class="chip">spread <b>${g.fair_spread>0?"+":""}${g.fair_spread.toFixed(1)}</b></span>
+  <div class="chips"><span class="chip">fair <b>${g.fair_spread>0?"+":""}${g.fair_spread.toFixed(1)}</b></span>
   <span class="chip">total <b>${g.fair_total.toFixed(1)}</b></span>
   ${g.book?`<span class="chip">book <b>${g.book.spread>0?"+":""}${g.book.spread.toFixed(1)}</b></span><span class="chip">o/u <b>${g.book.total!=null?g.book.total.toFixed(1):"--"}</b></span>`:""}
   ${g.book&&g.book.flag_spread?`<span class="chip edge">EDGE <b>${g.book.edge_spread>0?g.home:g.away} ${g.book.edge_spread>0?"+":""}${g.book.edge_spread.toFixed(1)}</b></span>`:""}
