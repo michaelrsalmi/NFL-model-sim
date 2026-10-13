@@ -160,7 +160,7 @@ function gameCard(g){
     <div class="mu"><span class="tm">${dot2(g.away,g.home)} ${g.away}</span><span class="pj">${g.proj_away.toFixed(1)}</span></div>
     <div class="mu"><span class="tm">${dot(g.home)} ${g.home}</span><span class="pj">${g.proj_home.toFixed(1)}</span></div>
     ${pbar(g.away,g.p_away,g.home,g.p_home)}
-    <div class="chips"><span class="chip">spread <b>${g.fair_spread>0?"+":""}${g.fair_spread.toFixed(1)}</b></span>
+    <div class="chips"><span class="chip">fair <b>${g.fair_spread>0?"+":""}${g.fair_spread.toFixed(1)}</b></span>
     <span class="chip">total <b>${g.fair_total.toFixed(1)}</b></span></div>${extra}`;
   el.onclick=()=>{
     const td={any:g.anytime.map(p=>({name:p.name,team:p.team,pa:p.prob,oA:p.odds})),
