@@ -32,6 +32,8 @@ h1{font-size:20px;letter-spacing:3px}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
 .chip{font-size:11px;background:#0d1320;border:1px solid var(--line);padding:4px 9px;border-radius:7px;color:var(--dim)}
 .chip b{color:var(--txt)}
+.chip.edge{background:rgba(0,133,202,.16);border-color:var(--ac2);font-weight:700}
+.chip.edge b{color:var(--ac)}
 .fin{font-size:12px;font-weight:700;margin-top:8px}
 .fin.hit{color:var(--grn)}.fin.miss{color:var(--red)}
 .lab{margin:26px 0;border-top:1px solid var(--line);padding-top:18px}
@@ -113,13 +115,22 @@ function tbl(rs,f){return `<table><tr><th>Player</th><th>Team</th><th>Prob</th><
  rs.map(p=>`<tr><td>${p.name}</td><td>${p.team}</td><td>${(p[f?"pf":"pa"]*100).toFixed(f?2:1)}%</td><td class="od">${od(p[f?"oF":"oA"])}</td></tr>`).join("")+`</table>`;}
 function detail(a,h,r,td){let tabs="";
  if(td&&td.any.length)tabs=`<div class="tabs"><button class="on" data-t="a">Anytime TD</button><button data-t="f">First TD</button></div><div class="tb">${tbl(td.any,0)}</div>`;
+ let book="";
+ if(r.book){const b=r.book;
+  book=`<div style="font-size:11px;color:var(--dim);letter-spacing:1px;margin:14px 0 6px">BOOK (DRAFTKINGS) VS MODEL</div>
+  <div class="sg2" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin:12px 0">
+  <div class="st"><div class="k">Book spread</div><div class="v">${b.spread>0?"+":""}${b.spread.toFixed(1)}</div></div>
+  <div class="st"><div class="k">Book total</div><div class="v">${b.total!=null?b.total.toFixed(1):"--"}</div></div>
+  ${b.flag_spread?`<div class="st" style="border-color:var(--ac2)"><div class="k">Spread edge</div><div class="v" style="color:var(--ac)">${b.edge_spread>0?h:a} ${b.edge_spread>0?"+":""}${b.edge_spread.toFixed(1)}</div></div>`:""}
+  ${b.flag_total?`<div class="st" style="border-color:var(--ac2)"><div class="k">Total edge</div><div class="v" style="color:var(--ac)">${b.edge_total>0?"OVER":"UNDER"} ${b.edge_total>0?"+":""}${b.edge_total.toFixed(1)}</div></div>`:""}
+  </div>`;}
  return `<h2 style="letter-spacing:2px;margin:0 0 4px">${a} @ ${h}</h2>
  <div class="sc" style="font-size:22px;font-weight:800;text-align:center;margin:8px 0">${a} ${r.pa.toFixed(1)} — ${r.ph.toFixed(1)} ${h}</div>${pbar(a,1-r.pHome,h,r.pHome,1)}
  <div class="sg2" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin:12px 0">
  <div class="st"><div class="k">Fair spread</div><div class="v">${(r.ph-r.pa)>=0?"+":""}${(r.ph-r.pa).toFixed(1)}</div></div>
  <div class="st"><div class="k">Fair total</div><div class="v">${(r.ph+r.pa).toFixed(1)}</div></div>
  <div class="st"><div class="k">${h} win</div><div class="v">${pc(r.pHome)}</div></div>
- <div class="st"><div class="k">${a} win</div><div class="v">${pc(1-r.pHome)}</div></div></div>${tabs}`;}
+ <div class="st"><div class="k">${a} win</div><div class="v">${pc(1-r.pHome)}</div></div></div>${book}${tabs}`;}
 function wireT(root,td){root.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
  root.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("on"));b.classList.add("on");
  root.querySelector(".tb").innerHTML=tbl(b.dataset.t==="a"?td.any:td.first,b.dataset.t==="f");});}
@@ -137,10 +148,13 @@ async function loadWeek(w){
   ${pbar(g.away,g.p_away,g.home,g.p_home)}
   <div class="pl"><span>${g.away} ${pc(g.p_away)}</span><span>${pc(g.p_home)} ${g.home}</span></div>
   <div class="chips"><span class="chip">spread <b>${g.fair_spread>0?"+":""}${g.fair_spread.toFixed(1)}</b></span>
-  <span class="chip">total <b>${g.fair_total.toFixed(1)}</b></span></div>${ex}`;
+  <span class="chip">total <b>${g.fair_total.toFixed(1)}</b></span>
+  ${g.book?`<span class="chip">book <b>${g.book.spread>0?"+":""}${g.book.spread.toFixed(1)}</b></span><span class="chip">o/u <b>${g.book.total!=null?g.book.total.toFixed(1):"--"}</b></span>`:""}
+  ${g.book&&g.book.flag_spread?`<span class="chip edge">EDGE <b>${g.book.edge_spread>0?g.home:g.away} ${g.book.edge_spread>0?"+":""}${g.book.edge_spread.toFixed(1)}</b></span>`:""}
+  ${g.book&&g.book.flag_total?`<span class="chip edge">EDGE <b>${g.book.edge_total>0?"OVER":"UNDER"} ${g.book.edge_total>0?"+":""}${g.book.edge_total.toFixed(1)}</b></span>`:""}</div>${ex}`;
   d.onclick=()=>{const td={any:(g.anytime||[]).map(p=>({name:p.name,team:p.team,pa:p.prob,oA:p.odds})),
    first:(g.first_td||[]).map(p=>({name:p.name,team:p.team,pf:p.prob,oF:p.odds}))};
-   $("mb").innerHTML=detail(g.away,g.home,{pa:g.proj_away,ph:g.proj_home,pHome:g.p_home},td);
+   $("mb").innerHTML=detail(g.away,g.home,{pa:g.proj_away,ph:g.proj_home,pHome:g.p_home,book:g.book},td);
    wireT($("mb"),td);$("modal").classList.remove("hidden");};
   el.appendChild(d);});
  const dn=gs.filter(g=>g.done&&g.winner),ht=dn.filter(g=>(g.winner==="home")==(g.p_home>.5)).length;
