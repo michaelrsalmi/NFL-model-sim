@@ -1,1 +1,1 @@
-{"lg_pts": 23.109375, "lg_epa": 0.013683889306797807, "ppg": 61.0546875, "hfa_pts": 1.0, "as_of_week": 4, "backtest": {"brier": 0.2235, "accuracy": 0.661, "games": 62}}
+{"lg_pts": 23.31645569620253, "lg_epa": 0.00430852288929843, "ppg": 61.256410256410255, "hfa_pts": 1.0, "as_of_week": 5, "backtest": {"brier": 0.2235, "accuracy": 0.661, "games": 62}}
