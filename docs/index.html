@@ -135,7 +135,7 @@ function detail(a,h,r,td){let tabs="";
   ${b.flag_total?`<div class="st" style="border-color:var(--ac2)"><div class="k">Total edge</div><div class="v" style="color:var(--ac)">${b.edge_total>0?"OVER":"UNDER"} ${b.edge_total>0?"+":""}${b.edge_total.toFixed(1)}</div></div>`:""}
   </div>`;}
  return `<h2 style="letter-spacing:2px;margin:0 0 4px">${a} @ ${h}</h2>
- <div class="sc" style="font-size:22px;font-weight:800;text-align:center;margin:8px 0">${a} ${r.pa.toFixed(1)} — ${r.ph.toFixed(1)} ${h}</div>${pbar(a,1-r.pHome,h,r.pHome,1)}
+ <div class="sc" style="font-size:22px;font-weight:800;text-align:center;margin:8px 0">${a} ${Math.round(r.pa)} — ${Math.round(r.ph)} ${h}</div>${pbar(a,1-r.pHome,h,r.pHome,1)}
  <div class="sg2" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin:12px 0">
  <div class="st"><div class="k">Fair spread</div><div class="v">${(r.ph-r.pa)>=0?"+":""}${(r.ph-r.pa).toFixed(1)}</div></div>
  <div class="st"><div class="k">Fair total</div><div class="v">${(r.ph+r.pa).toFixed(1)}</div></div>
