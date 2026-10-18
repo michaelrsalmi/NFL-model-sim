@@ -67,7 +67,7 @@ footer{text-align:center;color:var(--dim);font-size:11px;padding:24px;line-heigh
 <body><div class="wrap">
 <header><div class="brand"><div class="logo">◈</div>
 <div><h1>MODEL SIM</h1><div class="sub"><span class="kp">KEEP POUNDING</span> · <span id="asof"></span></div></div></div>
-<div class="badge"><span class="d"></span>Brier 0.224 · 66% SU <span style="opacity:.7">(62 games)</span></div></header>
+<div class="badge"><span class="d"></span><span id="btbadge">Brier …</span></div></header>
 <div class="wks" id="wks"></div>
 <div class="grid" id="cards"></div>
 <div class="lab"><h2>SIM LAB <span style="color:var(--dim);font-weight:400">— run any matchup live</span></h2>
@@ -151,16 +151,21 @@ async function loadWeek(w){
  gs.forEach(g=>{const d=document.createElement("div");d.className="card";
   const dt=g.date?new Date(g.date).toLocaleString("en-US",{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"";
   let ex="";if(g.done&&g.winner){const hit=(g.winner==="home")==(g.p_home>.5);
-   let extra="";
+   let extra="", primary=null;
    if(g.book&&g.book.spread!=null&&g.as!=null){
     const edgeS=g.fair_spread+g.book.spread, actS=(g.hs-g.as)+g.book.spread;
     const ats=edgeS!==0&&actS!==0?(edgeS>0)===(actS>0):null;
     let ou=null;
     if(g.book.total!=null){const mOver=g.fair_total>g.book.total, aOver=(g.as+g.hs)>g.book.total;
      if(g.fair_total!==g.book.total&&(g.as+g.hs)!==g.book.total)ou=mOver===aOver;}
+    // headline = the betting edge if one was flagged, else straight-up
+    if(ats!==null&&(g.book.flag_spread||g.book.strong_spread))primary=ats;
+    else if(ou!==null&&g.book.flag_total&&ats===null)primary=ou;
+    else primary=hit;
     if(ats!==null)extra+=` <span class="${ats?"hit":"miss"}">ATS ${ats?"✓":"✗"}</span>`;
     if(ou!==null)extra+=` <span class="${ou?"hit":"miss"}">O/U ${ou?"✓":"✗"}</span>`;}
-   ex=`<div class="fin ${hit?"hit":"miss"}">Final ${g.final} — model ${hit?"✓":"✗"}${extra}</div>`;}
+   else primary=hit;
+   ex=`<div class="fin ${primary?"hit":"miss"}">Final ${g.final} — model ${primary?"✓":"✗"}${extra}</div>`;}
   d.innerHTML=`<div class="dt">${dt}${g.done?" · Final":""}</div>
   <div class="mu"><span class="tm">${dot2(g.away,g.home)} ${g.away}</span><span class="pj">${g.done?g.as:Math.round(g.proj_away)}</span></div>
   <div class="mu"><span class="tm">${dot(g.home)} ${g.home}</span><span class="pj">${g.done?g.hs:Math.round(g.proj_home)}</span></div>
@@ -174,7 +179,7 @@ async function loadWeek(w){
   ${(g.inj_adj&&g.inj_adj[0]>=0.5)?`<span class="chip" style="border-color:#ff7b7b;color:#ff9b9b">🚑 ${g.away} -${g.inj_adj[0].toFixed(1)}</span>`:""}${(g.inj_adj&&g.inj_adj[1]>=0.5)?`<span class="chip" style="border-color:#ff7b7b;color:#ff9b9b">🚑 ${g.home} -${g.inj_adj[1].toFixed(1)}</span>`:""}
   ${g.wind_mph>=15?`<span class="chip" style="border-color:#7bc4ff;color:#9bd0ff">🌬️ ${g.wind_mph}mph (-${g.wind_adj} tot)</span>`:""}
   ${g.divisional?`<span class="chip" style="border-color:var(--dim);color:var(--dim)">divisional</span>`:""}
-  ${g.split?`<span class="chip" style="border-color:#ffd47b;color:#ffdb8b" title="Scoring model and win probability disagree — true toss-up">⚖️ split</span>`:""}</div>${ex}`;
+  ${g.split&&!g.done?`<span class="chip" style="border-color:#ffd47b;color:#ffdb8b" title="Scoring model and win probability disagree — true toss-up">⚖️ split</span>`:""}</div>${ex}`;
   d.onclick=()=>{const td={any:(g.anytime||[]).map(p=>({name:p.name,team:p.team,pa:p.prob,oA:p.odds})),
    first:(g.first_td||[]).map(p=>({name:p.name,team:p.team,pf:p.prob,oF:p.odds}))};
    $("mb").innerHTML=detail(g.away,g.home,{pa:g.proj_away,ph:g.proj_home,pHome:g.p_home,book:g.book,inj:g.injuries,injAdj:g.inj_adj,notes:g.notes,windMph:g.wind_mph,windAdj:g.wind_adj},td);
@@ -188,6 +193,7 @@ async function loadWeek(w){
 (async function(){
  META=await(await fetch("data/meta.json")).json();
  TEAMS=await(await fetch("data/teams.json")).json();
+ if(META.backtest)$("btbadge").innerHTML=`Brier ${META.backtest.brier.toFixed(3)} · ${Math.round(META.backtest.accuracy*100)}% SU <span style="opacity:.7">(${META.backtest.games} games)</span>`;
  const wk=Object.keys(WKC);let weeks=[];
  try{weeks=(await(await fetch("data/weeks.json")).json());}catch(e){}
  if(!weeks.length)weeks=[5];
