@@ -80,7 +80,7 @@ footer{text-align:center;color:var(--dim);font-size:11px;padding:24px;line-heigh
 </div>
 <div class="modal hidden" id="modal"><div class="mc"><button class="x" id="mx">✕</button><div id="mb"></div></div></div>
 <script>
-const C={ARI:"#97233F",ATL:"#A71930",BAL:"#241773",BUF:"#00338D",CAR:"#0085CA",CHI:"#0B162A",CIN:"#FB4F14",CLE:"#E31837",DAL:"#003594",DEN:"#FB4F14",DET:"#0076B6",GB:"#203731",HOU:"#03202F",IND:"#002C5F",JAX:"#006778",KC:"#E31837",LV:"#888888",LAC:"#0080C6",LAR:"#003594",MIA:"#008E97",MIN:"#4F2683",NE:"#002244",NO:"#D3BC8D",NYG:"#0B2265",NYJ:"#125740",PHI:"#004C54",PIT:"#FFB612",SEA:"#002244",SF:"#AA0000",TB:"#D50A0A",TEN:"#0C2340",WAS:"#5A1414"};
+const CB=Date.now();const C={ARI:"#97233F",ATL:"#A71930",BAL:"#241773",BUF:"#00338D",CAR:"#0085CA",CHI:"#0B162A",CIN:"#FB4F14",CLE:"#E31837",DAL:"#003594",DEN:"#FB4F14",DET:"#0076B6",GB:"#203731",HOU:"#03202F",IND:"#002C5F",JAX:"#006778",KC:"#E31837",LV:"#888888",LAC:"#0080C6",LAR:"#003594",MIA:"#008E97",MIN:"#4F2683",NE:"#002244",NO:"#D3BC8D",NYG:"#0B2265",NYJ:"#125740",PHI:"#004C54",PIT:"#FFB612",SEA:"#002244",SF:"#AA0000",TB:"#D50A0A",TEN:"#0C2340",WAS:"#5A1414"};
 const $=id=>document.getElementById(id);
 function hx(h){h=h.replace('#','');return[parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
 function shade(h,amt){const c=hx(h).map(v=>Math.max(0,Math.min(255,Math.round(v+amt))));return'#'+c.map(v=>v.toString(16).padStart(2,'0')).join('');}
@@ -146,7 +146,7 @@ function detail(a,h,r,td){let tabs="";
 function wireT(root,td){root.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
  root.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("on"));b.classList.add("on");
  root.querySelector(".tb").innerHTML=tbl(b.dataset.t==="a"?td.any:td.first,b.dataset.t==="f");});}
-async function getW(w){if(!WKC[w])WKC[w]=await(await fetch("data/week"+w+".json")).json();return WKC[w];}
+async function getW(w){if(!WKC[w])WKC[w]=await(await fetch("data/week"+w+".json?v="+CB)).json();return WKC[w];}
 async function loadWeek(w){
  document.querySelectorAll(".wks button").forEach(b=>b.classList.toggle("on",+b.dataset.w===w));
  const gs=await getW(w),el=$("cards");el.innerHTML="";
@@ -192,11 +192,11 @@ async function loadWeek(w){
  const tally=dn.length?`model ${ht}/${dn.length} SU${atsG.length?` · ${atsH}/${atsG.length} ATS`:""} this week · `:"";
  $("asof").textContent=`Week ${w} · ${tally}data through week ${META.as_of_week}`;}
 (async function(){
- META=await(await fetch("data/meta.json")).json();
- TEAMS=await(await fetch("data/teams.json")).json();
+ META=await(await fetch("data/meta.json?v="+CB)).json();
+ TEAMS=await(await fetch("data/teams.json?v="+CB)).json();
  if(META.backtest)$("btbadge").innerHTML=`Brier ${META.backtest.brier.toFixed(3)} · ${Math.round(META.backtest.accuracy*100)}% SU <span style="opacity:.7">(${META.backtest.games} games)</span>`;
  const wk=Object.keys(WKC);let weeks=[];
- try{weeks=(await(await fetch("data/weeks.json")).json());}catch(e){}
+ try{weeks=(await(await fetch("data/weeks.json?v="+CB)).json());}catch(e){}
  if(!weeks.length)weeks=[5];
  const nav=$("wks");
  weeks.forEach(w=>{const b=document.createElement("button");b.textContent="Week "+w;b.dataset.w=w;
@@ -214,7 +214,7 @@ async function loadWeek(w){
    $("lout").innerHTML=detail(a,h,r,td);wireT($("lout"),td);$("go").disabled=false;},30);};
  loadWeek(def);
  try{
-  const rec=await(await fetch("data/record.json")).json();
+  const rec=await(await fetch("data/record.json?v="+CB)).json();
   const tot=(w,l)=>w+l?`${w}-${l} (${Math.round(100*w/(w+l))}%)`:"—";
   let html=`<div class="sg2" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:12px 0">
    <div class="st"><div class="k">Straight-up</div><div class="v">${tot(rec.su_w,rec.su_l)}</div></div>
