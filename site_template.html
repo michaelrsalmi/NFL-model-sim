@@ -73,7 +73,7 @@ footer{text-align:center;color:var(--dim);font-size:11px;padding:24px;line-heigh
 <div class="row"><select id="la"></select><span style="color:var(--dim);font-weight:700">@</span><select id="lh"></select>
 <button class="run" id="go">RUN SIM</button></div>
 <div id="lout" style="margin-top:14px"></div></div>
-<footer>Elo (538-style) + opponent-adjusted scoring + nflverse EPA/play → Poisson Monte Carlo (20k sims). Win prob = ⅔ Elo + ⅓ sim.<br>“Fair” spread/total = the model's number · “book” = the DraftKings line. Estimates, not guarantees.</footer>
+<footer>Elo (538-style) + opponent-adjusted scoring + nflverse EPA/play → Poisson Monte Carlo (20k sims). Win prob = ⅔ Elo + ⅓ sim.<br>"Fair" spread/total = the model's number · "book" = the DraftKings line · 🚑 = EPA-based injury dock (ESPN feed). Estimates, not guarantees.</footer>
 </div>
 <div class="modal hidden" id="modal"><div class="mc"><button class="x" id="mx">✕</button><div id="mb"></div></div></div>
 <script>
@@ -115,6 +115,12 @@ function tbl(rs,f){return `<table><tr><th>Player</th><th>Team</th><th>Prob</th><
  rs.map(p=>`<tr><td>${p.name}</td><td>${p.team}</td><td>${(p[f?"pf":"pa"]*100).toFixed(f?2:1)}%</td><td class="od">${od(p[f?"oF":"oA"])}</td></tr>`).join("")+`</table>`;}
 function detail(a,h,r,td){let tabs="";
  if(td&&td.any.length)tabs=`<div class="tabs"><button class="on" data-t="a">Anytime TD</button><button data-t="f">First TD</button></div><div class="tb">${tbl(td.any,0)}</div>`;
+ let injSec="";
+ if(r.inj){const sides=[["away",a],["home",h]];let rows="",tot=0;
+  sides.forEach(([s,tm],i)=>{const adj=(r.injAdj&&r.injAdj[i])||0;tot+=adj;
+   (r.inj[s]||[]).forEach(x=>{const pts=x[2];
+    rows+=`<div class="st"><div class="k">${tm} · ${x[3]}</div><div class="v" style="color:${pts>=0?"#ff7b7b":"#7bff9e"};font-size:13px">${x[0]} <span style="font-size:10px;color:var(--dim)">${x[1]}</span> <b>${pts>=0?"-":"+"}${Math.abs(pts)}</b></div></div>`;});});
+  if(rows)injSec=`<div style="font-size:11px;color:var(--dim);letter-spacing:1px;margin:14px 0 6px">INJURY ADJUSTMENTS (EPA-BASED, VIA ESPN)</div><div class="sg2" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:12px 0">${rows}</div>`;}
  let book="";
  if(r.book){const b=r.book;
   book=`<div style="font-size:11px;color:var(--dim);letter-spacing:1px;margin:14px 0 6px">BOOK (DRAFTKINGS) VS MODEL</div>
@@ -130,7 +136,7 @@ function detail(a,h,r,td){let tabs="";
  <div class="st"><div class="k">Fair spread</div><div class="v">${(r.ph-r.pa)>=0?"+":""}${(r.ph-r.pa).toFixed(1)}</div></div>
  <div class="st"><div class="k">Fair total</div><div class="v">${(r.ph+r.pa).toFixed(1)}</div></div>
  <div class="st"><div class="k">${h} win</div><div class="v">${pc(r.pHome)}</div></div>
- <div class="st"><div class="k">${a} win</div><div class="v">${pc(1-r.pHome)}</div></div></div>${book}${tabs}`;}
+ <div class="st"><div class="k">${a} win</div><div class="v">${pc(1-r.pHome)}</div></div></div>${injSec}${book}${tabs}`;}
 function wireT(root,td){root.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
  root.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("on"));b.classList.add("on");
  root.querySelector(".tb").innerHTML=tbl(b.dataset.t==="a"?td.any:td.first,b.dataset.t==="f");});}
@@ -151,10 +157,11 @@ async function loadWeek(w){
   <span class="chip">total <b>${g.fair_total.toFixed(1)}</b></span>
   ${g.book?`<span class="chip">book <b>${g.book.spread>0?"+":""}${g.book.spread.toFixed(1)}</b></span><span class="chip">o/u <b>${g.book.total!=null?g.book.total.toFixed(1):"--"}</b></span>`:""}
   ${g.book&&g.book.flag_spread?`<span class="chip edge">EDGE <b>${g.book.edge_spread>0?g.home:g.away} ${g.book.edge_spread>0?"+":""}${g.book.edge_spread.toFixed(1)}</b></span>`:""}
-  ${g.book&&g.book.flag_total?`<span class="chip edge">EDGE <b>${g.book.edge_total>0?"OVER":"UNDER"} ${g.book.edge_total>0?"+":""}${g.book.edge_total.toFixed(1)}</b></span>`:""}</div>${ex}`;
+  ${g.book&&g.book.flag_total?`<span class="chip edge">EDGE <b>${g.book.edge_total>0?"OVER":"UNDER"} ${g.book.edge_total>0?"+":""}${g.book.edge_total.toFixed(1)}</b></span>`:""}
+  ${(g.inj_adj&&g.inj_adj[0]>=0.5)?`<span class="chip" style="border-color:#ff7b7b;color:#ff9b9b">🚑 ${g.away} -${g.inj_adj[0].toFixed(1)}</span>`:""}${(g.inj_adj&&g.inj_adj[1]>=0.5)?`<span class="chip" style="border-color:#ff7b7b;color:#ff9b9b">🚑 ${g.home} -${g.inj_adj[1].toFixed(1)}</span>`:""}</div>${ex}`;
   d.onclick=()=>{const td={any:(g.anytime||[]).map(p=>({name:p.name,team:p.team,pa:p.prob,oA:p.odds})),
    first:(g.first_td||[]).map(p=>({name:p.name,team:p.team,pf:p.prob,oF:p.odds}))};
-   $("mb").innerHTML=detail(g.away,g.home,{pa:g.proj_away,ph:g.proj_home,pHome:g.p_home,book:g.book},td);
+   $("mb").innerHTML=detail(g.away,g.home,{pa:g.proj_away,ph:g.proj_home,pHome:g.p_home,book:g.book,inj:g.injuries,injAdj:g.inj_adj},td);
    wireT($("mb"),td);$("modal").classList.remove("hidden");};
   el.appendChild(d);});
  const dn=gs.filter(g=>g.done&&g.winner),ht=dn.filter(g=>(g.winner==="home")==(g.p_home>.5)).length;
