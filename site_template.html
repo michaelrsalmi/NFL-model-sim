@@ -36,6 +36,7 @@ h1{font-size:20px;letter-spacing:3px}
 .chip.edge b{color:var(--ac)}
 .fin{font-size:12px;font-weight:700;margin-top:8px}
 .fin.hit{color:var(--grn)}.fin.miss{color:var(--red)}
+.fin .hit{color:var(--grn)}.fin .miss{color:var(--red)}
 .lab{margin:26px 0;border-top:1px solid var(--line);padding-top:18px}
 .lab h2{font-size:15px;letter-spacing:2px;margin-bottom:12px}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -147,7 +148,16 @@ async function loadWeek(w){
  gs.forEach(g=>{const d=document.createElement("div");d.className="card";
   const dt=g.date?new Date(g.date).toLocaleString("en-US",{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"";
   let ex="";if(g.done&&g.winner){const hit=(g.winner==="home")==(g.p_home>.5);
-   ex=`<div class="fin ${hit?"hit":"miss"}">Final ${g.final} — model ${hit?"✓":"✗"}</div>`;}
+   let extra="";
+   if(g.book&&g.book.spread!=null&&g.as!=null){
+    const edgeS=g.fair_spread+g.book.spread, actS=(g.hs-g.as)+g.book.spread;
+    const ats=edgeS!==0&&actS!==0?(edgeS>0)===(actS>0):null;
+    let ou=null;
+    if(g.book.total!=null){const mOver=g.fair_total>g.book.total, aOver=(g.as+g.hs)>g.book.total;
+     if(g.fair_total!==g.book.total&&(g.as+g.hs)!==g.book.total)ou=mOver===aOver;}
+    if(ats!==null)extra+=` <span class="${ats?"hit":"miss"}">ATS ${ats?"✓":"✗"}</span>`;
+    if(ou!==null)extra+=` <span class="${ou?"hit":"miss"}">O/U ${ou?"✓":"✗"}</span>`;}
+   ex=`<div class="fin ${hit?"hit":"miss"}">Final ${g.final} — model ${hit?"✓":"✗"}${extra}</div>`;}
   d.innerHTML=`<div class="dt">${dt}${g.done?" · Final":""}</div>
   <div class="mu"><span class="tm">${dot2(g.away,g.home)} ${g.away}</span><span class="pj">${g.proj_away.toFixed(1)}</span></div>
   <div class="mu"><span class="tm">${dot(g.home)} ${g.home}</span><span class="pj">${g.proj_home.toFixed(1)}</span></div>
@@ -165,7 +175,10 @@ async function loadWeek(w){
    wireT($("mb"),td);$("modal").classList.remove("hidden");};
   el.appendChild(d);});
  const dn=gs.filter(g=>g.done&&g.winner),ht=dn.filter(g=>(g.winner==="home")==(g.p_home>.5)).length;
- $("asof").textContent=`Week ${w} · ${dn.length?`model ${ht}/${dn.length} this week · `:""}data through week ${META.as_of_week}`;}
+ const atsG=dn.filter(g=>g.book&&g.book.spread!=null&&g.as!=null);
+ const atsH=atsG.filter(g=>{const e=g.fair_spread+g.book.spread,a=(g.hs-g.as)+g.book.spread;return e!==0&&a!==0&&(e>0)===(a>0);}).length;
+ const tally=dn.length?`model ${ht}/${dn.length} SU${atsG.length?` · ${atsH}/${atsG.length} ATS`:""} this week · `:"";
+ $("asof").textContent=`Week ${w} · ${tally}data through week ${META.as_of_week}`;}
 (async function(){
  META=await(await fetch("data/meta.json")).json();
  TEAMS=await(await fetch("data/teams.json")).json();
