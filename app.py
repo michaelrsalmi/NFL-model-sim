@@ -80,7 +80,7 @@ def slate(week: int = 5):
     out = []
     for g in games:
         r = predict(g["away"], g["home"], data, max_week=week - 1,
-                    sims=10000, include_td=False)
+                    sims=10000, include_td=False, use_injuries=not g["done"])
         row = _slim(r)
         row["date"] = g["date"]
         row["done"] = g["done"]
@@ -91,7 +91,7 @@ def slate(week: int = 5):
         out.append(row)
     res = {"week": week, "games": out,
            "as_of_week": MAX_DONE_WEEK,
-           "backtest": {"brier": 0.2235, "accuracy": 0.661, "games": 62,
+           "backtest": {"brier": 0.2198, "accuracy": 0.619, "games": 63,
                         "note": "walk-forward, 2026 weeks 2-5"}}
     SLATE_CACHE[week] = res
     return res

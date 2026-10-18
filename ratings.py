@@ -72,6 +72,8 @@ def adjusted_scoring(games):
     """
     teams = sorted({g["away"] for g in games} | {g["home"] for g in games})
     done = [g for g in games if g["done"]]
+    if not done:
+        return {}, {}, 22.0
     total_pts = sum(g["as"] + g["hs"] for g in done)
     total_tm = sum(2 for _ in done)
     lg = total_pts / total_tm if total_tm else 22.0
@@ -114,6 +116,8 @@ def expected_points(away, home, off, deff, lg, games_played):
     da = shrink(away, deff.get(away, 0.0))
     oh = shrink(home, off.get(home, 0.0))
     dh = shrink(home, deff.get(home, 0.0))
-    la = min(45.0, max(10.0, lg + oa - dh))
-    lh = min(45.0, max(10.0, lg + oh - da))
+    # deff = points ABOVE avg allowed (positive = bad defense), so a bad
+    # opposing defense ADDS to your expected score.
+    la = min(45.0, max(10.0, lg + oa + dh))
+    lh = min(45.0, max(10.0, lg + oh + da))
     return la, lh

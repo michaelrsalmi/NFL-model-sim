@@ -66,7 +66,7 @@ def _blended_scoring(cur_done, prior):
 
 
 def predict(away, home, data, max_week=MAX_DONE_WEEK, sims=20000,
-            seed=None, include_td=True, refresh=False):
+            seed=None, include_td=True, refresh=False, use_injuries=True):
     """Full prediction for one matchup. Returns a results dict."""
     away, home = away.upper(), home.upper()
     rng = np.random.default_rng(seed)
@@ -97,6 +97,21 @@ def predict(away, home, data, max_week=MAX_DONE_WEEK, sims=20000,
     lam_a = min(45.0, max(10.0, 0.5 * (lam_a_srs + lam_a_epa) - HOME_PTS))
     lam_h = min(45.0, max(10.0, 0.5 * (lam_h_srs + lam_h_epa) + HOME_PTS))
 
+    # injury adjustments (upcoming games only — no historical injury data)
+    inj_a, inj_h, det_a, det_h = 0.0, 0.0, [], []
+    out_a, out_h = set(), set()
+    if use_injuries:
+        try:
+            from injuries import team_injury_adjustment, fetch_injuries, out_keys
+            _inj = fetch_injuries()
+            inj_a, det_a = team_injury_adjustment(away, _inj)
+            inj_h, det_h = team_injury_adjustment(home, _inj)
+            out_a, out_h = out_keys(away, _inj), out_keys(home, _inj)
+            lam_a = min(45.0, max(10.0, lam_a - inj_a))
+            lam_h = min(45.0, max(10.0, lam_h - inj_h))
+        except Exception:
+            pass
+
     n = sims
     sa = rng.poisson(lam_a, n)
     sh = rng.poisson(lam_h, n)
@@ -104,8 +119,12 @@ def predict(away, home, data, max_week=MAX_DONE_WEEK, sims=20000,
     away_w = int((sa > sh).sum())
     ties = n - home_w - away_w
     p_sim_home = (home_w + 0.5 * ties) / n
-    p_elo_home = win_prob(elo.get(home, ELO_INIT), elo.get(away, ELO_INIT),
-                          home_team="a")
+    # Elo is backward-looking, so shift it by the injury adjustment
+    # (~25 Elo per point, the standard NFL conversion) to keep the
+    # win prob coherent with the injury-adjusted sims.
+    elo_h_adj = elo.get(home, ELO_INIT) - inj_h * 25.0
+    elo_a_adj = elo.get(away, ELO_INIT) - inj_a * 25.0
+    p_elo_home = win_prob(elo_h_adj, elo_a_adj, home_team="a")
     p_home = ELO_WEIGHT * p_elo_home + (1 - ELO_WEIGHT) * p_sim_home
 
     res = {
@@ -118,11 +137,16 @@ def predict(away, home, data, max_week=MAX_DONE_WEEK, sims=20000,
         "lam_away": lam_a, "lam_home": lam_h,
         "elo_home": elo.get(home, ELO_INIT),
         "elo_away": elo.get(away, ELO_INIT),
+        "inj_adj": [inj_a, inj_h],
+        "injuries": {"away": det_a, "home": det_h},
     }
     if include_td:
         try:
+            from injuries import _key as _ikey
             ap_ = player_tds(away, SEASON, refresh=refresh)
             hp_ = player_tds(home, SEASON, refresh=refresh)
+            ap_ = [p for p in ap_ if _ikey(p["name"]) not in out_a]
+            hp_ = [p for p in hp_ if _ikey(p["name"]) not in out_h]
             anytime, first = build_td_board(ap_, hp_, lam_a, lam_h)
             res["anytime"] = [
                 {"name": p["name"], "team": p["team"],

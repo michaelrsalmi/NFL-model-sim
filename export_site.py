@@ -97,7 +97,8 @@ def main():
         out = []
         for i, g in enumerate(games):
             r = predict(g["away"], g["home"], data, max_week=week - 1,
-                        sims=10000, seed=week * 100 + i, include_td=not g["done"])
+                        sims=10000, seed=week * 100 + i,
+                        include_td=not g["done"], use_injuries=not g["done"])
             row = {
                 "away": r["away"], "home": r["home"], "date": g["date"],
                 "done": g["done"],
@@ -106,6 +107,8 @@ def main():
                 "proj_home": round(r["proj_home"], 1),
                 "fair_spread": round(r["fair_spread"], 1),
                 "fair_total": round(r["fair_total"], 1),
+                "inj_adj": r["inj_adj"],
+                "injuries": r["injuries"],
             }
             if not g["done"]:
                 # full TD boards only for upcoming games (keeps bundle small)
@@ -149,8 +152,8 @@ def main():
     with open(os.path.join(datadir, "meta.json"), "w") as f:
         json.dump({"lg_pts": lg, "lg_epa": lg_e, "ppg": ppg, "hfa_pts": 1.0,
                    "as_of_week": MAXDW,
-                   "backtest": {"brier": 0.2235, "accuracy": 0.661,
-                                "games": 62}}, f)
+                   "backtest": {"brier": 0.2198, "accuracy": 0.619,
+                                "games": 63}}, f)
     with open(os.path.join(datadir, "weeks.json"), "w") as f:
         json.dump(sorted(int(w) for w in weeks), f)
 

@@ -78,7 +78,9 @@ def epa_expected_points(away, home, off, deff, lg_epa, ppg, lg_pts,
     da = blend(deff, deff25, away)
     oh = blend(off, off25, home)
     dh = blend(deff, deff25, home)
-    # points above average each unit contributes per game
-    la = lg_pts + (oa - lg_epa) * ppg + (lg_epa - dh) * ppg
-    lh = lg_pts + (oh - lg_epa) * ppg + (lg_epa - da) * ppg
+    # points above average each unit contributes per game.
+    # deff = EPA/play ALLOWED (higher = worse defense), so facing a bad
+    # defense adds (dh - lg_epa) * plays to your expected score.
+    la = lg_pts + (oa - lg_epa) * ppg + (dh - lg_epa) * ppg
+    lh = lg_pts + (oh - lg_epa) * ppg + (da - lg_epa) * ppg
     return la, lh

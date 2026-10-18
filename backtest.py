@@ -23,7 +23,8 @@ def main():
         print(f"week {week}: {len(games)} games")
         for g in games:
             r = predict(g["away"], g["home"], data, max_week=week - 1,
-                        sims=SIMS, seed=week * 100 + n, include_td=False)
+                        sims=SIMS, seed=week * 100 + n, include_td=False,
+                        use_injuries=False)
             home_won = 1.0 if g["hs"] > g["as"] else (0.0 if g["hs"] < g["as"] else 0.5)
             brier += (r["p_home"] - home_won) ** 2
             correct += (r["p_home"] > 0.5) == (home_won == 1.0)
