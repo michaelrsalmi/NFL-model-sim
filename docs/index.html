@@ -162,8 +162,8 @@ async function loadWeek(w){
     if(ou!==null)extra+=` <span class="${ou?"hit":"miss"}">O/U ${ou?"✓":"✗"}</span>`;}
    ex=`<div class="fin ${hit?"hit":"miss"}">Final ${g.final} — model ${hit?"✓":"✗"}${extra}</div>`;}
   d.innerHTML=`<div class="dt">${dt}${g.done?" · Final":""}</div>
-  <div class="mu"><span class="tm">${dot2(g.away,g.home)} ${g.away}</span><span class="pj">${g.proj_away.toFixed(1)}</span></div>
-  <div class="mu"><span class="tm">${dot(g.home)} ${g.home}</span><span class="pj">${g.proj_home.toFixed(1)}</span></div>
+  <div class="mu"><span class="tm">${dot2(g.away,g.home)} ${g.away}</span><span class="pj">${g.done?g.as:g.proj_away.toFixed(1)}</span></div>
+  <div class="mu"><span class="tm">${dot(g.home)} ${g.home}</span><span class="pj">${g.done?g.hs:g.proj_home.toFixed(1)}</span></div>
   ${pbar(g.away,g.p_away,g.home,g.p_home)}
   <div class="pl"><span>${g.away} ${pc(g.p_away)}</span><span>${pc(g.p_home)} ${g.home}</span></div>
   <div class="chips"><span class="chip">fair <b>${g.fair_spread>0?"+":""}${g.fair_spread.toFixed(1)}</b></span>
