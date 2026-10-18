@@ -176,7 +176,7 @@ def main():
                         "edge_spread": edge_s, "edge_total": edge_t,
                         # model minus book: +spread edge => model likes home more
                         "flag_spread": abs(edge_s) >= 2.0,
-                        "flag_total": edge_t is not None and abs(edge_t) >= 3.0,
+                        "flag_total": False,  # totals model not reliable - disabled per research
                         # key-number crossing makes an edge 2-3x more valuable
                         "key_cross": keys,
                         "strong_spread": abs(edge_s) >= 3.0 and bool(keys),
@@ -191,7 +191,7 @@ def main():
                     row["book"].update({
                         "edge_spread": edge_s, "edge_total": edge_t,
                         "flag_spread": abs(edge_s) >= 2.0,
-                        "flag_total": edge_t is not None and abs(edge_t) >= 3.0,
+                        "flag_total": False,  # totals model not reliable - disabled per research
                         "key_cross": key_numbers_crossed(r["fair_spread"], ab["spread"]),
                         "strong_spread": False,
                     })
@@ -207,7 +207,7 @@ def main():
                     row["book"].update({
                         "edge_spread": edge_s, "edge_total": edge_t,
                         "flag_spread": abs(edge_s) >= 2.0,
-                        "flag_total": edge_t is not None and abs(edge_t) >= 3.0,
+                        "flag_total": False,  # totals model not reliable - disabled per research
                         "key_cross": key_numbers_crossed(r["fair_spread"], ab["spread"]),
                         "strong_spread": False,
                     })
