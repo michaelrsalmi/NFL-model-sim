@@ -87,6 +87,14 @@ def main():
             "players": players,
         }
 
+    # ---- book archive: once a line is captured, keep it forever ----
+    # (ESPN strips odds after games go final)
+    arc_path = os.path.join(BASE, "docs", "data", "book_archive.json")
+    try:
+        archive = json.load(open(arc_path))
+    except Exception:
+        archive = {}
+
     # ---- walk-forward slate for every week ----
     weeks = {}
     for week in range(1, 19):
@@ -94,8 +102,15 @@ def main():
         if not games:
             continue
         books = book_lines(week)  # free DraftKings lines via ESPN (upcoming only)
+        for (a, h), b in books.items():
+            if b and b["spread_home"] is not None:
+                archive[f"{a}@{h}_{week}"] = {
+                    "spread": b["spread_home"], "total": b["total"],
+                    "fav": b["favorite"], "by": b["provider"]}
         out = []
         for i, g in enumerate(games):
+            key = f"{g['away']}@{g['home']}_{week}"
+            ab = archive.get(key)  # archived line (survives after final)
             r = predict(g["away"], g["home"], data, max_week=week - 1,
                         sims=10000, seed=week * 100 + i,
                         include_td=not g["done"], use_injuries=not g["done"])
@@ -129,11 +144,17 @@ def main():
                         "flag_spread": abs(edge_s) >= 2.0,
                         "flag_total": edge_t is not None and abs(edge_t) >= 3.0,
                     }
+                elif ab:
+                    row["book"] = ab
             else:
                 row["anytime"] = []
                 row["first_td"] = []
+                if ab:
+                    # keep the archived line so ATS/O/U can be marked
+                    row["book"] = ab
             if g["done"]:
                 row["final"] = f"{g['as']}-{g['hs']}"
+                row["as"], row["hs"] = g["as"], g["hs"]
                 row["winner"] = ("away" if g["as"] > g["hs"]
                                  else "home" if g["hs"] > g["as"] else "tie")
             out.append(row)
@@ -156,6 +177,8 @@ def main():
                                 "games": 63}}, f)
     with open(os.path.join(datadir, "weeks.json"), "w") as f:
         json.dump(sorted(int(w) for w in weeks), f)
+    with open(arc_path, "w") as f:
+        json.dump(archive, f)
 
     # ---- docs/index.html from the fetch-based template ----
     import shutil
