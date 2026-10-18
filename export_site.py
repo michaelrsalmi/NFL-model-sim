@@ -265,7 +265,7 @@ def main():
     # ---- record.json: all-season track record for the RECORD tab ----
     rec = {"su_w": 0, "su_l": 0, "ats_w": 0, "ats_l": 0, "ou_w": 0, "ou_l": 0,
            "by_week": [], "edges": []}
-    for week in sorted(weeks.keys()):
+    for week in sorted(weeks.keys(), key=int):
         wsu_w = wsu_l = wats_w = wats_l = wou_w = wou_l = 0
         for r in weeks[week]:
             if not (r["done"] and r.get("winner")):
