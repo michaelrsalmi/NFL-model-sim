@@ -122,6 +122,9 @@ function detail(a,h,r,td){let tabs="";
    (r.inj[s]||[]).forEach(x=>{const pts=x[2];
     rows+=`<div class="st"><div class="k">${tm} · ${x[3]}</div><div class="v" style="color:${pts>=0?"#ff7b7b":"#7bff9e"};font-size:13px">${x[0]} <span style="font-size:10px;color:var(--dim)">${x[1]}</span> <b>${pts>=0?"-":"+"}${Math.abs(pts)}</b></div></div>`;});});
   if(rows)injSec=`<div style="font-size:11px;color:var(--dim);letter-spacing:1px;margin:14px 0 6px">INJURY ADJUSTMENTS (EPA-BASED, VIA ESPN)</div><div class="sg2" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:12px 0">${rows}</div>`;}
+ let noteSec="";
+ if(r.notes&&r.notes.length)noteSec=`<div style="font-size:11px;color:var(--dim);letter-spacing:1px;margin:14px 0 6px">NOTES</div>${r.notes.map(n=>`<div class="st"><div class="k">📊</div><div class="v" style="font-size:13px">${n}</div></div>`).join("")}`;
+ if(r.windMph>=15)noteSec+=`<div class="st"><div class="k">🌬️ Wind</div><div class="v" style="font-size:13px">${r.windMph} mph sustained — total shaded -${r.windAdj} pts</div></div>`;
  let book="";
  if(r.book){const b=r.book;
   book=`<div style="font-size:11px;color:var(--dim);letter-spacing:1px;margin:14px 0 6px">BOOK (DRAFTKINGS) VS MODEL</div>
@@ -137,7 +140,7 @@ function detail(a,h,r,td){let tabs="";
  <div class="st"><div class="k">Fair spread</div><div class="v">${(r.ph-r.pa)>=0?"+":""}${(r.ph-r.pa).toFixed(1)}</div></div>
  <div class="st"><div class="k">Fair total</div><div class="v">${(r.ph+r.pa).toFixed(1)}</div></div>
  <div class="st"><div class="k">${h} win</div><div class="v">${pc(r.pHome)}</div></div>
- <div class="st"><div class="k">${a} win</div><div class="v">${pc(1-r.pHome)}</div></div></div>${injSec}${book}${tabs}`;}
+ <div class="st"><div class="k">${a} win</div><div class="v">${pc(1-r.pHome)}</div></div></div>${injSec}${noteSec}${book}${tabs}`;}
 function wireT(root,td){root.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
  root.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("on"));b.classList.add("on");
  root.querySelector(".tb").innerHTML=tbl(b.dataset.t==="a"?td.any:td.first,b.dataset.t==="f");});}
@@ -166,12 +169,14 @@ async function loadWeek(w){
   <div class="chips"><span class="chip">fair <b>${g.fair_spread>0?"+":""}${g.fair_spread.toFixed(1)}</b></span>
   <span class="chip">total <b>${g.fair_total.toFixed(1)}</b></span>
   ${g.book?`<span class="chip">book <b>${g.book.spread>0?"+":""}${g.book.spread.toFixed(1)}</b></span><span class="chip">o/u <b>${g.book.total!=null?g.book.total.toFixed(1):"--"}</b></span>`:""}
-  ${g.book&&g.book.flag_spread?`<span class="chip edge">EDGE <b>${g.book.edge_spread>0?g.home:g.away} ${g.book.edge_spread>0?"+":""}${g.book.edge_spread.toFixed(1)}</b></span>`:""}
+  ${g.book&&g.book.flag_spread?`<span class="chip edge">EDGE <b>${g.book.edge_spread>0?g.home:g.away} ${g.book.edge_spread>0?"+":""}${g.book.edge_spread.toFixed(1)}</b>${g.book.key_cross&&g.book.key_cross.length?` 🔑${g.book.key_cross.join("/")}`:""}</span>`:""}
   ${g.book&&g.book.flag_total?`<span class="chip edge">EDGE <b>${g.book.edge_total>0?"OVER":"UNDER"} ${g.book.edge_total>0?"+":""}${g.book.edge_total.toFixed(1)}</b></span>`:""}
-  ${(g.inj_adj&&g.inj_adj[0]>=0.5)?`<span class="chip" style="border-color:#ff7b7b;color:#ff9b9b">🚑 ${g.away} -${g.inj_adj[0].toFixed(1)}</span>`:""}${(g.inj_adj&&g.inj_adj[1]>=0.5)?`<span class="chip" style="border-color:#ff7b7b;color:#ff9b9b">🚑 ${g.home} -${g.inj_adj[1].toFixed(1)}</span>`:""}</div>${ex}`;
+  ${(g.inj_adj&&g.inj_adj[0]>=0.5)?`<span class="chip" style="border-color:#ff7b7b;color:#ff9b9b">🚑 ${g.away} -${g.inj_adj[0].toFixed(1)}</span>`:""}${(g.inj_adj&&g.inj_adj[1]>=0.5)?`<span class="chip" style="border-color:#ff7b7b;color:#ff9b9b">🚑 ${g.home} -${g.inj_adj[1].toFixed(1)}</span>`:""}
+  ${g.wind_mph>=15?`<span class="chip" style="border-color:#7bc4ff;color:#9bd0ff">🌬️ ${g.wind_mph}mph (-${g.wind_adj} tot)</span>`:""}
+  ${g.divisional?`<span class="chip" style="border-color:var(--dim);color:var(--dim)">divisional</span>`:""}</div>${ex}`;
   d.onclick=()=>{const td={any:(g.anytime||[]).map(p=>({name:p.name,team:p.team,pa:p.prob,oA:p.odds})),
    first:(g.first_td||[]).map(p=>({name:p.name,team:p.team,pf:p.prob,oF:p.odds}))};
-   $("mb").innerHTML=detail(g.away,g.home,{pa:g.proj_away,ph:g.proj_home,pHome:g.p_home,book:g.book,inj:g.injuries,injAdj:g.inj_adj},td);
+   $("mb").innerHTML=detail(g.away,g.home,{pa:g.proj_away,ph:g.proj_home,pHome:g.p_home,book:g.book,inj:g.injuries,injAdj:g.inj_adj,notes:g.notes,windMph:g.wind_mph,windAdj:g.wind_adj},td);
    wireT($("mb"),td);$("modal").classList.remove("hidden");};
   el.appendChild(d);});
  const dn=gs.filter(g=>g.done&&g.winner),ht=dn.filter(g=>(g.winner==="home")==(g.p_home>.5)).length;
