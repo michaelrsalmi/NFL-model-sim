@@ -173,7 +173,8 @@ async function loadWeek(w){
   ${g.book&&g.book.flag_total?`<span class="chip edge">EDGE <b>${g.book.edge_total>0?"OVER":"UNDER"} ${g.book.edge_total>0?"+":""}${g.book.edge_total.toFixed(1)}</b></span>`:""}
   ${(g.inj_adj&&g.inj_adj[0]>=0.5)?`<span class="chip" style="border-color:#ff7b7b;color:#ff9b9b">🚑 ${g.away} -${g.inj_adj[0].toFixed(1)}</span>`:""}${(g.inj_adj&&g.inj_adj[1]>=0.5)?`<span class="chip" style="border-color:#ff7b7b;color:#ff9b9b">🚑 ${g.home} -${g.inj_adj[1].toFixed(1)}</span>`:""}
   ${g.wind_mph>=15?`<span class="chip" style="border-color:#7bc4ff;color:#9bd0ff">🌬️ ${g.wind_mph}mph (-${g.wind_adj} tot)</span>`:""}
-  ${g.divisional?`<span class="chip" style="border-color:var(--dim);color:var(--dim)">divisional</span>`:""}</div>${ex}`;
+  ${g.divisional?`<span class="chip" style="border-color:var(--dim);color:var(--dim)">divisional</span>`:""}
+  ${g.split?`<span class="chip" style="border-color:#ffd47b;color:#ffdb8b" title="Scoring model and win probability disagree — true toss-up">⚖️ split</span>`:""}</div>${ex}`;
   d.onclick=()=>{const td={any:(g.anytime||[]).map(p=>({name:p.name,team:p.team,pa:p.prob,oA:p.odds})),
    first:(g.first_td||[]).map(p=>({name:p.name,team:p.team,pf:p.prob,oF:p.odds}))};
    $("mb").innerHTML=detail(g.away,g.home,{pa:g.proj_away,ph:g.proj_home,pHome:g.p_home,book:g.book,inj:g.injuries,injAdj:g.inj_adj,notes:g.notes,windMph:g.wind_mph,windAdj:g.wind_adj},td);

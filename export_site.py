@@ -133,6 +133,7 @@ def main():
                 "fair_spread": round(r["fair_spread"], 1),
                 "fair_total": round(r["fair_total"], 1),
                 "divisional": r["divisional"],
+                "split": r["split"],
                 "wind_mph": r["wind_mph"], "wind_adj": r["wind_adj"],
                 "inj_adj": r["inj_adj"],
                 "injuries": r["injuries"],
@@ -210,7 +211,7 @@ def main():
     with open(os.path.join(datadir, "meta.json"), "w") as f:
         json.dump({"lg_pts": lg, "lg_epa": lg_e, "ppg": ppg, "hfa_pts": 1.0,
                    "as_of_week": MAXDW,
-                   "backtest": {"brier": 0.2175, "accuracy": 0.603,
+                   "backtest": {"brier": 0.2176, "accuracy": 0.603,
                                 "games": 63}}, f)
     with open(os.path.join(datadir, "weeks.json"), "w") as f:
         json.dump(sorted(int(w) for w in weeks), f)
