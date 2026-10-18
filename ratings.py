@@ -18,6 +18,22 @@ ELO_K = 40.0
 ELO_HFA = 42.2          # Elo points of home-field edge
 ELO_REGRESS = 0.40      # offseason regression toward mean
 HOME_PTS = 1.0          # points added to home team expectation (2.0 total edge)
+DIV_HFA_SHAVE = 0.75    # divisional games: home edge is ~0.75 pts smaller
+                        # (Greer: 1.36-pt gap; 0.75 is the conservative choice)
+
+DIVISIONS = {
+    "BUF": "AFCE", "MIA": "AFCE", "NE": "AFCE", "NYJ": "AFCE",
+    "BAL": "AFCN", "CIN": "AFCN", "CLE": "AFCN", "PIT": "AFCN",
+    "HOU": "AFCS", "IND": "AFCS", "JAX": "AFCS", "TEN": "AFCS",
+    "DEN": "AFCW", "KC": "AFCW", "LAC": "AFCW", "LV": "AFCW",
+    "DAL": "NFCE", "NYG": "NFCE", "PHI": "NFCE", "WSH": "NFCE",
+    "CHI": "NFCN", "DET": "NFCN", "GB": "NFCN", "MIN": "NFCN",
+    "ATL": "NFCS", "CAR": "NFCS", "NO": "NFCS", "TB": "NFCS",
+    "ARI": "NFCW", "LAR": "NFCW", "SEA": "NFCW", "SF": "NFCW",
+}
+
+def is_divisional(away, home):
+    return DIVISIONS.get(away.upper()) == DIVISIONS.get(home.upper())
 
 
 def win_prob(elo_a, elo_b, home_team="a"):

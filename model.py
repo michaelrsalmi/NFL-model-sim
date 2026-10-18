@@ -9,8 +9,9 @@ import numpy as np
 
 from fetch import all_games, team_summary, player_tds, PFR_ABBR
 from ratings import (regress_offseason, win_prob, adjusted_scoring,
-                     expected_points, ELO_INIT, ELO_K, _mov_mult, HOME_PTS)
-from epa import team_epa, epa_expected_points
+                     expected_points, ELO_INIT, ELO_K, _mov_mult, HOME_PTS,
+                     DIV_HFA_SHAVE, is_divisional)
+from epa import team_epa, epa_expected_points, team_pace
 from td_model import build_td_board
 
 SEASON = 2026
@@ -66,7 +67,8 @@ def _blended_scoring(cur_done, prior):
 
 
 def predict(away, home, data, max_week=MAX_DONE_WEEK, sims=20000,
-            seed=None, include_td=True, refresh=False, use_injuries=True):
+            seed=None, include_td=True, refresh=False, use_injuries=True,
+            game_time=None):
     """Full prediction for one matchup. Returns a results dict."""
     away, home = away.upper(), home.upper()
     rng = np.random.default_rng(seed)
@@ -94,8 +96,11 @@ def predict(away, home, data, max_week=MAX_DONE_WEEK, sims=20000,
         off_e25, def_e25 = {}, {}
     lam_a_epa, lam_h_epa = epa_expected_points(
         away, home, off_e, def_e, lg_e, ppg, lg, off_e25, def_e25, gp)
-    lam_a = min(45.0, max(10.0, 0.5 * (lam_a_srs + lam_a_epa) - HOME_PTS))
-    lam_h = min(45.0, max(10.0, 0.5 * (lam_h_srs + lam_h_epa) + HOME_PTS))
+    # divisional games: familiarity shrinks the home edge (~0.75 pts)
+    div = is_divisional(away, home)
+    hfa = HOME_PTS - (DIV_HFA_SHAVE if div else 0.0)
+    lam_a = min(45.0, max(10.0, 0.5 * (lam_a_srs + lam_a_epa) - hfa))
+    lam_h = min(45.0, max(10.0, 0.5 * (lam_h_srs + lam_h_epa) + hfa))
 
     # injury adjustments (upcoming games only — no historical injury data)
     inj_a, inj_h, det_a, det_h = 0.0, 0.0, [], []
@@ -112,6 +117,43 @@ def predict(away, home, data, max_week=MAX_DONE_WEEK, sims=20000,
         except Exception:
             pass
 
+    # pace adjustment: faster games -> more plays -> more points.
+    # Scale the total (not the margin) by a dampened pace factor.
+    if max_week >= 1:
+        try:
+            pace, lg_pace = team_pace(SEASON, max_week)
+            pace25, _ = team_pace(PRIOR_SEASON)
+            def _pace(t):
+                n = gp.get(t, 0)
+                cur = pace.get(t, lg_pace)
+                prior = pace25.get(t, lg_pace)
+                # blend like EPA: current + 40% regressed prior by games played
+                w = n / (n + 8.0)
+                return w * cur + (1 - w) * (0.6 * prior + 0.4 * lg_pace)
+            pr = (_pace(away) + _pace(home)) / 2.0 / lg_pace
+            pm = 0.7 + 0.3 * pr
+            tot = lam_a + lam_h
+            mgn = lam_h - lam_a
+            lam_a = min(45.0, max(10.0, (tot * pm - mgn) / 2.0))
+            lam_h = min(45.0, max(10.0, (tot * pm + mgn) / 2.0))
+        except Exception:
+            pass
+
+    # wind: sustained 15+ mph suppresses scoring (~0.17 pts/mph).
+    # Outdoor games only; domes excluded in weather.py.
+    wind_mph, wind_adj = None, 0.0
+    if use_injuries and game_time:
+        try:
+            from weather import game_wind
+            wind_mph, wind_adj = game_wind(home, game_time)
+            if wind_adj:
+                tot = lam_a + lam_h
+                mgn = lam_h - lam_a
+                lam_a = min(45.0, max(10.0, (tot - wind_adj - mgn) / 2.0))
+                lam_h = min(45.0, max(10.0, (tot - wind_adj + mgn) / 2.0))
+        except Exception:
+            pass
+
     n = sims
     sa = rng.poisson(lam_a, n)
     sh = rng.poisson(lam_h, n)
@@ -124,6 +166,9 @@ def predict(away, home, data, max_week=MAX_DONE_WEEK, sims=20000,
     # win prob coherent with the injury-adjusted sims.
     elo_h_adj = elo.get(home, ELO_INIT) - inj_h * 25.0
     elo_a_adj = elo.get(away, ELO_INIT) - inj_a * 25.0
+    if div:
+        # divisional shave on the Elo-implied home edge too (~25 Elo per point)
+        elo_h_adj -= DIV_HFA_SHAVE * 25.0
     p_elo_home = win_prob(elo_h_adj, elo_a_adj, home_team="a")
     p_home = ELO_WEIGHT * p_elo_home + (1 - ELO_WEIGHT) * p_sim_home
 
@@ -137,6 +182,8 @@ def predict(away, home, data, max_week=MAX_DONE_WEEK, sims=20000,
         "lam_away": lam_a, "lam_home": lam_h,
         "elo_home": elo.get(home, ELO_INIT),
         "elo_away": elo.get(away, ELO_INIT),
+        "divisional": div,
+        "wind_mph": wind_mph, "wind_adj": wind_adj,
         "inj_adj": [inj_a, inj_h],
         "injuries": {"away": det_a, "home": det_h},
     }

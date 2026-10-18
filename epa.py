@@ -55,6 +55,24 @@ def team_epa(season, max_week=None):
     return off, deff, float(lg), float(ppg)
 
 
+def team_pace(season, max_week=None):
+    """Returns (pace_dict, lg_pace): plays per game by team (ESPN abbr).
+
+    Pace is a real driver of totals; blend with prior season like EPA.
+    """
+    d = load_pbp(season)
+    if d is None or len(d) == 0:
+        return {}, 63.0
+    if max_week is not None:
+        d = d[d.week <= max_week]
+    if len(d) == 0:
+        return {}, 63.0
+    g = d.groupby(["game_id", "posteam"]).size().reset_index()
+    g["tm"] = g["posteam"].map(lambda k: NV_TO_ESPN.get(k, k))
+    pace = g.groupby("tm")[0].mean().to_dict()
+    return pace, float(g[0].mean())
+
+
 def epa_expected_points(away, home, off, deff, lg_epa, ppg, lg_pts,
                         off25=None, deff25=None, gp=None):
     """EPA-implied expected points for a matchup.

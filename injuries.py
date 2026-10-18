@@ -68,7 +68,7 @@ def _key(name):
 
 
 def fetch_injuries(max_age_hours=6):
-    """Return {abbr: [(display_name, status)]} for actionable statuses."""
+    """Return {abbr: [(display_name, status, position_abbr)]} for actionable statuses."""
     if os.path.exists(CACHE):
         age = (time.time() - os.path.getmtime(CACHE)) / 3600
         if age < max_age_hours:
@@ -83,9 +83,11 @@ def fetch_injuries(max_age_hours=6):
         for p in t.get("injuries", []):
             st = p.get("status", "")
             if st in FULL or st in HALF:
-                nm = (p.get("athlete") or {}).get("displayName", "")
+                ath = p.get("athlete") or {}
+                nm = ath.get("displayName", "")
+                pos = ((ath.get("position") or {}).get("abbreviation", "")) or ""
                 if nm:
-                    out.setdefault(abbr, []).append((nm, st))
+                    out.setdefault(abbr, []).append((nm, st, pos))
     json.dump(out, open(CACHE, "w"))
     return out
 
@@ -187,8 +189,16 @@ def team_injury_adjustment(abbr, injuries=None, season=2026):
     if len(qbs) >= 2 and qbs.iloc[1]["plays"] >= 15:
         backup_epa = float(qbs.iloc[1]["epa_per_play"])
 
+    # positional heuristic docks for OL/DEF (no per-play EPA available).
+    # Conservative; labeled "(est.)" in details.
+    LINE_DOCK = {"T": 0.7, "OT": 0.7, "G": 0.4, "C": 0.4, "OL": 0.4,
+                 "DE": 0.5, "EDGE": 0.5, "OLB": 0.4, "CB": 0.4,
+                 "DT": 0.3, "NT": 0.3, "LB": 0.3, "S": 0.3, "DB": 0.3,
+                 "ILB": 0.3, "MLB": 0.3, "FS": 0.3, "SS": 0.3}
     total, details = 0.0, []
-    for name, status in lst:
+    for item in lst:
+        name, status = item[0], item[1]
+        espn_pos = item[2] if len(item) > 2 else ""
         k = _key(name)
         # 1) same-team match first (avoids cross-team collisions like
         #    ARI's Jeremiyah Love vs GB's QB J.Love)
@@ -202,6 +212,15 @@ def team_injury_adjustment(abbr, injuries=None, season=2026):
             if m.iloc[0]["team"] != abbr and m.iloc[0]["plays"] >= 50:
                 continue
         if len(m) == 0:
+            # OL/DEF heuristic: no per-play EPA, use positional dock.
+            # Only for ESPN-listed linemen/defenders (avoids double-counting
+            # skill players already handled above).
+            dock = LINE_DOCK.get(espn_pos.upper(), 0.0)
+            if dock:
+                pts = dock * (0.5 if status in HALF else 1.0)
+                details.append((name, status + " (est.)", round(pts, 1),
+                                espn_pos.upper()))
+                total += pts
             continue
         r = m.iloc[0]
         pos = r["pos"]
@@ -229,7 +248,7 @@ def out_keys(abbr, injuries=None):
     """Name-keys of players fully out (for TD-board filtering)."""
     if injuries is None:
         injuries = fetch_injuries()
-    return {_key(nm) for nm, st in injuries.get(abbr, []) if st in FULL}
+    return {_key(x[0]) for x in injuries.get(abbr, []) if x[1] in FULL}
 
 
 if __name__ == "__main__":

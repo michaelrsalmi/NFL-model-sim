@@ -26,6 +26,23 @@ def _parse_moneyline(s):
     return int(m.group(1)) if m else None
 
 
+def key_numbers_crossed(fair_spread, spread_home):
+    """Which key numbers (3, 7) the model-vs-market gap straddles.
+
+    fair_spread = model's E[home - away]; spread_home = book handicap
+    (negative = home favored). Market-implied home margin = -spread_home.
+    An edge crossing 3 or 7 is ~2-3x more valuable (15.1% / 9.0% of
+    games land on those margins).
+    """
+    if fair_spread is None or spread_home is None:
+        return []
+    mkt = -spread_home
+    out = []
+    for k in (3, 7):
+        if (fair_spread - k) * (mkt - k) < 0 or (fair_spread + k) * (mkt + k) < 0:
+            out.append(k)
+    return out
+
 def book_lines(week, season=2026):
     """Return {(away_abbr, home_abbr): dict} for the given week.
 

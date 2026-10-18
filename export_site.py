@@ -9,7 +9,8 @@ import os
 
 from fetch import all_games, player_tds
 from model import SeasonData, predict, SEASON
-from odds import book_lines
+from odds import book_lines, key_numbers_crossed
+from turnovers import turnover_margins, luck_flag
 from ratings import adjusted_scoring
 from epa import team_epa
 
@@ -97,6 +98,14 @@ def main():
 
     # ---- walk-forward slate for every week ----
     weeks = {}
+    # bye weeks: teams with no game in week W are "off a bye" for week W+1.
+    # Market overprices the bye by ~0.7 pts (true +0.3, priced +1.0) —
+    # fade it when measuring our edge vs the book.
+    teams_by_week = {}
+    for g in data.cur:
+        teams_by_week.setdefault(g["week"], set()).update([g["away"], g["home"]])
+    all_teams = {t for s in teams_by_week.values() for t in s}
+    bye_teams = {w: all_teams - teams_by_week.get(w, set()) for w in range(1, 19)}
     for week in range(1, 19):
         games = [g for g in data.cur if g["week"] == week]
         if not games:
@@ -113,7 +122,8 @@ def main():
             ab = archive.get(key)  # archived line (survives after final)
             r = predict(g["away"], g["home"], data, max_week=week - 1,
                         sims=10000, seed=week * 100 + i,
-                        include_td=not g["done"], use_injuries=not g["done"])
+                        include_td=not g["done"], use_injuries=not g["done"],
+                        game_time=None if g["done"] else g["date"])
             row = {
                 "away": r["away"], "home": r["home"], "date": g["date"],
                 "done": g["done"],
@@ -122,9 +132,21 @@ def main():
                 "proj_home": round(r["proj_home"], 1),
                 "fair_spread": round(r["fair_spread"], 1),
                 "fair_total": round(r["fair_total"], 1),
+                "divisional": r["divisional"],
+                "wind_mph": r["wind_mph"], "wind_adj": r["wind_adj"],
                 "inj_adj": r["inj_adj"],
                 "injuries": r["injuries"],
             }
+            # turnover-luck flags (walk-forward: only data available pre-week)
+            if not g["done"]:
+                tm = turnover_margins(2026, week - 1)
+                notes = []
+                for t in (g["away"], g["home"]):
+                    f = luck_flag(tm.get(t, 0.0))
+                    if f:
+                        notes.append(f"{t}: {f}")
+                if notes:
+                    row["notes"] = notes
             if not g["done"]:
                 # full TD boards only for upcoming games (keeps bundle small)
                 row["anytime"] = r["anytime"]
@@ -134,8 +156,19 @@ def main():
                     # fair_spread = E[home pts - away pts]; book spread_home is
                     # the handicap (negative = home favored), so flip its sign
                     edge_s = round(r["fair_spread"] + b["spread_home"], 1)
+                    # bye fade: market prices ~1.0 for a bye worth ~0.3
+                    bye_note = None
+                    off_bye_h = g["home"] in bye_teams.get(week - 1, set())
+                    off_bye_a = g["away"] in bye_teams.get(week - 1, set())
+                    if off_bye_h and not off_bye_a:
+                        edge_s = round(edge_s - 0.7, 1)
+                        bye_note = "home off bye (-0.7 mkt premium)"
+                    elif off_bye_a and not off_bye_h:
+                        edge_s = round(edge_s + 0.7, 1)
+                        bye_note = "away off bye (+0.7 mkt premium)"
                     edge_t = (round(r["fair_total"] - b["total"], 1)
                               if b["total"] is not None else None)
+                    keys = key_numbers_crossed(r["fair_spread"], b["spread_home"])
                     row["book"] = {
                         "spread": b["spread_home"], "total": b["total"],
                         "fav": b["favorite"], "by": b["provider"],
@@ -143,6 +176,10 @@ def main():
                         # model minus book: +spread edge => model likes home more
                         "flag_spread": abs(edge_s) >= 2.0,
                         "flag_total": edge_t is not None and abs(edge_t) >= 3.0,
+                        # key-number crossing makes an edge 2-3x more valuable
+                        "key_cross": keys,
+                        "strong_spread": abs(edge_s) >= 3.0 and bool(keys),
+                        "bye_note": bye_note,
                     }
                 elif ab:
                     row["book"] = ab
@@ -173,12 +210,35 @@ def main():
     with open(os.path.join(datadir, "meta.json"), "w") as f:
         json.dump({"lg_pts": lg, "lg_epa": lg_e, "ppg": ppg, "hfa_pts": 1.0,
                    "as_of_week": MAXDW,
-                   "backtest": {"brier": 0.2198, "accuracy": 0.619,
+                   "backtest": {"brier": 0.2175, "accuracy": 0.603,
                                 "games": 63}}, f)
     with open(os.path.join(datadir, "weeks.json"), "w") as f:
         json.dump(sorted(int(w) for w in weeks), f)
     with open(arc_path, "w") as f:
         json.dump(archive, f)
+    # ---- CLV log: when a game goes final, record our fair vs the last
+    # ---- archived book (~closing line). This is the pro's scoreboard.
+    clv_path = os.path.join(datadir, "clv.json")
+    try:
+        clv = json.load(open(clv_path))
+    except Exception:
+        clv = []
+    seen = {(c["away"], c["home"], c["week"]) for c in clv}
+    for week, games in weeks.items():
+        for r in games:
+            key = (r["away"], r["home"], int(week))
+            if r["done"] and key not in seen:
+                ab = archive.get(f"{r['away']}@{r['home']}_{week}")
+                if ab:
+                    clv.append({
+                        "away": r["away"], "home": r["home"], "week": int(week),
+                        "fair_spread": r["fair_spread"], "fair_total": r["fair_total"],
+                        "close_spread": ab["spread"], "close_total": ab["total"],
+                        "final": r.get("final"),
+                    })
+                    seen.add(key)
+    with open(clv_path, "w") as f:
+        json.dump(clv, f)
 
     # ---- docs/index.html from the fetch-based template ----
     import shutil
