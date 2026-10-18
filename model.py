@@ -172,6 +172,9 @@ def predict(away, home, data, max_week=MAX_DONE_WEEK, sims=20000,
     sh0 = rng.poisson(lam_h, 2000)
     p_sim_home = float(((sh0 > sa0).sum() + 0.5 * (sh0 == sa0).sum()) / 2000)
     p_home = ELO_WEIGHT * p_elo_home + (1 - ELO_WEIGHT) * p_sim_home
+    # Calibration shrinkage: walk-forward showed overconfidence in the
+    # 55-70% band (model 63% vs actual 38%). Shrink toward 50% to correct.
+    p_home = 0.5 + 0.9 * (p_home - 0.5)
     # Final sims for score/spread/total (pure scoring model).
     sa = rng.poisson(lam_a, n)
     sh = rng.poisson(lam_h, n)

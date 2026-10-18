@@ -183,13 +183,34 @@ def main():
                         "bye_note": bye_note,
                     }
                 elif ab:
-                    row["book"] = ab
+                    # archived book: compute edge flags from our fair numbers
+                    edge_s = round(r["fair_spread"] + ab["spread"], 1)
+                    edge_t = (round(r["fair_total"] - ab["total"], 1)
+                              if ab.get("total") is not None else None)
+                    row["book"] = dict(ab)
+                    row["book"].update({
+                        "edge_spread": edge_s, "edge_total": edge_t,
+                        "flag_spread": abs(edge_s) >= 2.0,
+                        "flag_total": edge_t is not None and abs(edge_t) >= 3.0,
+                        "key_cross": key_numbers_crossed(r["fair_spread"], ab["spread"]),
+                        "strong_spread": False,
+                    })
             else:
                 row["anytime"] = []
                 row["first_td"] = []
                 if ab:
                     # keep the archived line so ATS/O/U can be marked
-                    row["book"] = ab
+                    edge_s = round(r["fair_spread"] + ab["spread"], 1)
+                    edge_t = (round(r["fair_total"] - ab["total"], 1)
+                              if ab.get("total") is not None else None)
+                    row["book"] = dict(ab)
+                    row["book"].update({
+                        "edge_spread": edge_s, "edge_total": edge_t,
+                        "flag_spread": abs(edge_s) >= 2.0,
+                        "flag_total": edge_t is not None and abs(edge_t) >= 3.0,
+                        "key_cross": key_numbers_crossed(r["fair_spread"], ab["spread"]),
+                        "strong_spread": False,
+                    })
             if g["done"]:
                 row["final"] = f"{g['as']}-{g['hs']}"
                 row["as"], row["hs"] = g["as"], g["hs"]
@@ -240,6 +261,58 @@ def main():
                     seen.add(key)
     with open(clv_path, "w") as f:
         json.dump(clv, f)
+
+    # ---- record.json: all-season track record for the RECORD tab ----
+    rec = {"su_w": 0, "su_l": 0, "ats_w": 0, "ats_l": 0, "ou_w": 0, "ou_l": 0,
+           "by_week": [], "edges": []}
+    for week in sorted(weeks.keys()):
+        wsu_w = wsu_l = wats_w = wats_l = wou_w = wou_l = 0
+        for r in weeks[week]:
+            if not (r["done"] and r.get("winner")):
+                continue
+            # SU
+            hit = (r["winner"] == "home") == (r["p_home"] > 0.5)
+            if hit:
+                rec["su_w"] += 1; wsu_w += 1
+            else:
+                rec["su_l"] += 1; wsu_l += 1
+            # ATS / O-U (needs book)
+            b = r.get("book")
+            if b and b.get("spread") is not None and r.get("as") is not None:
+                edge_s = r["fair_spread"] + b["spread"]
+                act_s = (r["hs"] - r["as"]) + b["spread"]
+                if edge_s != 0 and act_s != 0:
+                    ats = (edge_s > 0) == (act_s > 0)
+                    if ats:
+                        rec["ats_w"] += 1; wats_w += 1
+                    else:
+                        rec["ats_l"] += 1; wats_l += 1
+                    # was it a flagged edge?
+                    if b.get("flag_spread") or b.get("strong_spread"):
+                        rec["edges"].append({
+                            "game": f"{r['away']} @ {r['home']}",
+                            "week": int(week),
+                            "pick": r["home"] if edge_s > 0 else r["away"],
+                            "line": b["spread"],
+                            "result": "W" if ats else "L",
+                        })
+                if b.get("total") is not None:
+                    m_over = r["fair_total"] > b["total"]
+                    a_over = (r["as"] + r["hs"]) > b["total"]
+                    if r["fair_total"] != b["total"] and (r["as"] + r["hs"]) != b["total"]:
+                        ou = m_over == a_over
+                        if ou:
+                            rec["ou_w"] += 1; wou_w += 1
+                        else:
+                            rec["ou_l"] += 1; wou_l += 1
+        rec["by_week"].append({
+            "week": int(week),
+            "su": f"{wsu_w}-{wsu_l}",
+            "ats": f"{wats_w}-{wats_l}" if (wats_w + wats_l) else "—",
+            "ou": f"{wou_w}-{wou_l}" if (wou_w + wou_l) else "—",
+        })
+    with open(os.path.join(datadir, "record.json"), "w") as f:
+        json.dump(rec, f)
 
     # ---- docs/index.html from the fetch-based template ----
     import shutil
