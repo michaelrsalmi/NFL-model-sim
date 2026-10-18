@@ -155,12 +155,6 @@ def predict(away, home, data, max_week=MAX_DONE_WEEK, sims=20000,
             pass
 
     n = sims
-    sa = rng.poisson(lam_a, n)
-    sh = rng.poisson(lam_h, n)
-    home_w = int((sh > sa).sum())
-    away_w = int((sa > sh).sum())
-    ties = n - home_w - away_w
-    p_sim_home = (home_w + 0.5 * ties) / n
     # Elo is backward-looking, so shift it by the injury adjustment
     # (~25 Elo per point, the standard NFL conversion) to keep the
     # win prob coherent with the injury-adjusted sims.
@@ -170,12 +164,37 @@ def predict(away, home, data, max_week=MAX_DONE_WEEK, sims=20000,
         # divisional shave on the Elo-implied home edge too (~25 Elo per point)
         elo_h_adj -= DIV_HFA_SHAVE * 25.0
     p_elo_home = win_prob(elo_h_adj, elo_a_adj, home_team="a")
-    p_home = ELO_WEIGHT * p_elo_home + (1 - ELO_WEIGHT) * p_sim_home
+    # Blend probabilities (the empirically best-calibrated approach)...
+    p_sim_0 = float((rng.poisson(lam_h, 2000) > rng.poisson(lam_a, 2000)).mean())
+    p_home = ELO_WEIGHT * p_elo_home + (1 - ELO_WEIGHT) * p_sim_0
+    # ...then shift the score distribution so the projected scores imply
+    # that same win probability (bisection on the spread shift). This keeps
+    # the card internally consistent: the team projected to score more is
+    # always the team favored to win.
+    lo, hi = -15.0, 15.0
+    best_shift = 0.0
+    for _ in range(25):
+        mid = (lo + hi) / 2.0
+        la_t = min(45.0, max(10.0, lam_a - mid / 2.0))
+        lh_t = min(45.0, max(10.0, lam_h + mid / 2.0))
+        # normal approx to Poisson win prob (fast, deterministic)
+        import math as _m
+        sd = _m.sqrt(la_t + lh_t)
+        p_t = 0.5 * (1 + _m.erf((lh_t - la_t) / (sd * _m.sqrt(2)))) if sd > 0 else 0.5
+        if p_t < p_home:
+            lo = mid
+        else:
+            hi = mid
+        best_shift = mid
+    lam_a2 = min(45.0, max(10.0, lam_a - best_shift / 2.0))
+    lam_h2 = min(45.0, max(10.0, lam_h + best_shift / 2.0))
+    sa = rng.poisson(lam_a2, n)
+    sh = rng.poisson(lam_h2, n)
 
     res = {
         "away": away, "home": home, "sims": n,
         "p_home": p_home, "p_away": 1 - p_home,
-        "p_sim_home": p_sim_home, "p_elo_home": p_elo_home,
+        "p_elo_home": p_elo_home,
         "proj_away": float(sa.mean()), "proj_home": float(sh.mean()),
         "fair_spread": float(sh.mean() - sa.mean()),
         "fair_total": float(sh.mean() + sa.mean()),
