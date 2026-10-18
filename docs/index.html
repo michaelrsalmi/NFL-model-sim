@@ -70,6 +70,8 @@ footer{text-align:center;color:var(--dim);font-size:11px;padding:24px;line-heigh
 <div class="badge"><span class="d"></span><span id="btbadge">Brier …</span></div></header>
 <div class="wks" id="wks"></div>
 <div class="grid" id="cards"></div>
+<div class="lab" id="recordlab"><h2>MODEL RECORD <span style="color:var(--dim);font-weight:400">— verified results</span></h2>
+<div id="recordout"><div class="spin">Loading record…</div></div></div>
 <div class="lab"><h2>SIM LAB <span style="color:var(--dim);font-weight:400">— run any matchup live</span></h2>
 <div class="row"><select id="la"></select><span style="color:var(--dim);font-weight:700">@</span><select id="lh"></select>
 <button class="run" id="go">RUN SIM</button></div>
@@ -210,5 +212,21 @@ async function loadWeek(w){
   setTimeout(()=>{const r=simGame(a,h,20000,Date.now()%100000),td=tdBoard(a,h,r.la,r.lh);
    $("lout").innerHTML=detail(a,h,r,td);wireT($("lout"),td);$("go").disabled=false;},30);};
  loadWeek(def);
+ try{
+  const rec=await(await fetch("data/record.json")).json();
+  const tot=(w,l)=>w+l?`${w}-${l} (${Math.round(100*w/(w+l))}%)`:"—";
+  let html=`<div class="sg2" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:12px 0">
+   <div class="st"><div class="k">Straight-up</div><div class="v">${tot(rec.su_w,rec.su_l)}</div></div>
+   <div class="st"><div class="k">ATS (vs line)</div><div class="v">${tot(rec.ats_w,rec.ats_l)}</div></div>
+   <div class="st"><div class="k">Totals</div><div class="v">${tot(rec.ou_w,rec.ou_l)}</div></div>
+   <div class="st"><div class="k">Flagged edges ATS</div><div class="v">${tot(rec.edges.filter(e=>e.result==="W").length,rec.edges.filter(e=>e.result==="L").length)}</div></div>
+  </div>`;
+  if(rec.by_week.length)html+=`<table><tr><th>Week</th><th>SU</th><th>ATS</th><th>O/U</th></tr>`+
+   rec.by_week.map(w=>`<tr><td>${w.week}</td><td>${w.su}</td><td>${w.ats}</td><td>${w.ou}</td></tr>`).join("")+`</table>`;
+  if(rec.edges.length)html+=`<div style="font-size:11px;color:var(--dim);letter-spacing:1px;margin:14px 0 6px">FLAGGED EDGES</div><table><tr><th>Game</th><th>Wk</th><th>Pick</th><th>Result</th></tr>`+
+   rec.edges.map(e=>`<tr><td>${e.game}</td><td>${e.week}</td><td>${e.pick}</td><td style="color:${e.result==="W"?"var(--grn)":"var(--red)"};font-weight:700">${e.result}</td></tr>`).join("")+`</table>`;
+  html+=`<div style="font-size:11px;color:var(--dim);margin-top:10px">Walk-forward backtest: Brier ${META.backtest.brier.toFixed(3)} · ${Math.round(META.backtest.accuracy*100)}% SU (${META.backtest.games} games). Edges are model/book disagreements, not guarantees.</div>`;
+  $("recordout").innerHTML=html;
+ }catch(e){$("recordout").innerHTML=`<div class="spin">Record unavailable.</div>`;}
 })();
 </script></body></html>
