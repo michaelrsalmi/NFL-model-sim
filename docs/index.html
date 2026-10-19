@@ -69,6 +69,7 @@ footer{text-align:center;color:var(--dim);font-size:11px;padding:24px;line-heigh
 <div><h1>MODEL SIM</h1><div class="sub"><span class="kp">KEEP POUNDING</span> · <span id="asof"></span></div></div></div>
 <div class="badge"><span class="d"></span><span id="btbadge">Brier …</span></div></header>
 <div class="wks" id="wks"></div>
+<div id="wkrecap" style="margin:0 20px 14px"></div>
 <div class="grid" id="cards"></div>
 <div class="lab" id="recordlab"><h2>MODEL RECORD <span style="color:var(--dim);font-weight:400">— verified results</span></h2>
 <div id="recordout"><div class="spin">Loading record…</div></div></div>
@@ -180,7 +181,8 @@ async function loadWeek(w){
   ${(g.inj_adj&&g.inj_adj[0]>=0.5)?`<span class="chip" style="border-color:#ff7b7b;color:#ff9b9b">🚑 ${g.away} -${g.inj_adj[0].toFixed(1)}</span>`:""}${(g.inj_adj&&g.inj_adj[1]>=0.5)?`<span class="chip" style="border-color:#ff7b7b;color:#ff9b9b">🚑 ${g.home} -${g.inj_adj[1].toFixed(1)}</span>`:""}
   ${g.wind_mph>=15?`<span class="chip" style="border-color:#7bc4ff;color:#9bd0ff">🌬️ ${g.wind_mph}mph (-${g.wind_adj} tot)</span>`:""}
   ${g.divisional?`<span class="chip" style="border-color:var(--dim);color:var(--dim)">divisional</span>`:""}
-  ${g.split&&!g.done?`<span class="chip" style="border-color:#ffd47b;color:#ffdb8b" title="Scoring model and win probability disagree — true toss-up">⚖️ split</span>`:""}</div>${ex}`;
+  ${g.split&&!g.done?`<span class="chip" style="border-color:#ffd47b;color:#ffdb8b" title="Scoring model and win probability disagree — true toss-up">⚖️ split</span>`:""}</div>
+  ${!g.done&&g.book&&g.book.flag_spread?`<div style="font-size:11px;color:var(--dim);margin-top:8px;line-height:1.5">Why: Model has ${g.book.edge_spread>0?g.home:g.away} ${Math.abs(g.book.edge_spread).toFixed(1)}pts better than the ${Math.abs(g.book.spread).toFixed(1)}pt line.${g.inj_adj&&(g.inj_adj[0]>=0.5||g.inj_adj[1]>=0.5)?` Injury-adjusted.`:""}${g.wind_mph>=15?` Wind impacts total.`:""}</div>`:""}${ex}`;
   d.onclick=()=>{const td={any:(g.anytime||[]).map(p=>({name:p.name,team:p.team,pa:p.prob,oA:p.odds})),
    first:(g.first_td||[]).map(p=>({name:p.name,team:p.team,pf:p.prob,oF:p.odds}))};
    $("mb").innerHTML=detail(g.away,g.home,{pa:g.proj_away,ph:g.proj_home,pHome:g.p_home,book:g.book,inj:g.injuries,injAdj:g.inj_adj,notes:g.notes,windMph:g.wind_mph,windAdj:g.wind_adj},td);
@@ -190,7 +192,15 @@ async function loadWeek(w){
  const atsG=dn.filter(g=>g.book&&g.book.spread!=null&&g.as!=null);
  const atsH=atsG.filter(g=>{const e=g.fair_spread+g.book.spread,a=(g.hs-g.as)+g.book.spread;return e!==0&&a!==0&&(e>0)===(a>0);}).length;
  const tally=dn.length?`model ${ht}/${dn.length} SU${atsG.length?` · ${atsH}/${atsG.length} ATS`:""} this week · `:"";
- $("asof").textContent=`Week ${w} · ${tally}data through week ${META.as_of_week}`;}
+ $("asof").textContent=`Week ${w} · ${tally}data through week ${META.as_of_week}`;
+ // week recap banner (for done weeks)
+ if(dn.length>0){
+  const eg=dn.filter(g=>g.book&&(g.book.flag_spread||g.book.strong_spread));
+  const egH=eg.filter(g=>{const e=g.fair_spread+g.book.spread,a=(g.hs-g.as)+g.book.spread;return e!==0&&a!==0&&(e>0)===(a>0);}).length;
+  $("wkrecap").innerHTML=`<div class="card" style="cursor:default"><div class="dt">WEEK ${w} RESULTS</div>
+   <div style="font-size:18px;font-weight:800;margin:6px 0">${ht}-${dn.length-ht} SU · ${atsH}-${atsG.length-atsH} ATS ${eg.length?`· <span style="color:${egH>eg.length/2?"var(--grn)":"var(--red)"}">${egH}-${eg.length-egH} on flagged edges</span>`:""}</div>
+   <div style="font-size:12px;color:var(--dim)">Shareable: Model went ${ht}-${dn.length-ht} straight-up, ${atsH}-${atsG.length-atsH} against the spread in Week ${w}.</div></div>`;
+ } else $("wkrecap").innerHTML="";}
 (async function(){
  META=await(await fetch("data/meta.json?v="+CB)).json();
  TEAMS=await(await fetch("data/teams.json?v="+CB)).json();
